@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Building2, BookOpen, Users, ChevronRight, Plus, X,
   FileText, Github, Download, Trash2, GraduationCap,
@@ -1185,6 +1185,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isOnline, setIsOnline] = useState(isSupabaseAvailable());
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
   const [schools, setSchools] = useState<any[]>([]);
   const [klasses, setKlasses] = useState<any[]>([]);
@@ -1201,19 +1202,28 @@ export default function App() {
   const [editingClass, setEditingClass] = useState<any | null>(null);
   const [editingStudent, setEditingStudent] = useState<any | null>(null);
 
+  // ── Auto-Refresh Setup ─────────────────────────────────────────────────────
+  const autoRefreshInterval = useRef<NodeJS.Timeout | null>(null);
+  const isRefreshing = useRef(false);
+
   // ── Load Data ──────────────────────────────────────────────────────────────
-  const loadData = useCallback(async () => {
-    setLoading(true);
+  const loadData = useCallback(async (showLoading = true) => {
+    if (isRefreshing.current) return;
+    
+    if (showLoading) {
+      setLoading(true);
+    }
     setError(null);
     
     if (!isSupabaseAvailable()) {
       setError('Cannot connect to database. Please check your connection.');
-      setLoading(false);
+      if (showLoading) setLoading(false);
       setIsOnline(false);
       return;
     }
 
     try {
+      isRefreshing.current = true;
       setIsOnline(true);
       
       const [schoolsRes, classesRes, studentsRes, assessmentsRes, docsRes] = await Promise.all([
@@ -1236,39 +1246,86 @@ export default function App() {
       setAsmts(assessmentsRes.data || []);
       setDocs(docsRes.data || []);
       
-      console.log('✅ Data loaded successfully!');
+      setLastRefresh(new Date());
+      
+      if (!showLoading) {
+        // Silent refresh - just update the last refresh time
+        console.log('🔄 Auto-refresh completed at:', new Date().toLocaleTimeString());
+      } else {
+        console.log('✅ Data loaded successfully!');
+      }
     } catch (err: any) {
       console.error('❌ Error loading data:', err);
-      setError(`Failed to load data: ${err.message}`);
+      if (showLoading) {
+        setError(`Failed to load data: ${err.message}`);
+      }
     } finally {
-      setLoading(false);
+      isRefreshing.current = false;
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   }, []);
 
-  // ── Real-time Subscriptions ──────────────────────────────────────────────
+  // ── Auto-Refresh Every Second ─────────────────────────────────────────────
   useEffect(() => {
-    loadData();
+    // Initial load
+    loadData(true);
 
+    // Set up auto-refresh every second
+    autoRefreshInterval.current = setInterval(() => {
+      if (isSupabaseAvailable()) {
+        loadData(false); // Silent refresh without loading spinner
+      }
+    }, 1000); // 1000ms = 1 second
+
+    // Cleanup interval on unmount
+    return () => {
+      if (autoRefreshInterval.current) {
+        clearInterval(autoRefreshInterval.current);
+        autoRefreshInterval.current = null;
+      }
+    };
+  }, []); // Empty dependency array - run once on mount
+
+  // ── Real-time Subscriptions (Backup to auto-refresh) ──────────────────────
+  useEffect(() => {
     if (!isSupabaseAvailable()) return;
 
     const channels = [
       supabase!.channel('schools_changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'schools' }, loadData)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'schools' }, () => {
+          console.log('🔄 Schools changed via subscription');
+          loadData(false);
+        })
         .subscribe(),
       supabase!.channel('classes_changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'classes' }, loadData)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'classes' }, () => {
+          console.log('🔄 Classes changed via subscription');
+          loadData(false);
+        })
         .subscribe(),
       supabase!.channel('students_changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'students' }, loadData)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'students' }, () => {
+          console.log('🔄 Students changed via subscription');
+          loadData(false);
+        })
         .subscribe(),
       supabase!.channel('assessments_changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'assessments' }, loadData)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'assessments' }, () => {
+          console.log('🔄 Assessments changed via subscription');
+          loadData(false);
+        })
         .subscribe(),
       supabase!.channel('documents_changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'documents' }, loadData)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'documents' }, () => {
+          console.log('🔄 Documents changed via subscription');
+          loadData(false);
+        })
         .subscribe(),
     ];
 
+    // Check connection status periodically
     const interval = setInterval(() => {
       setIsOnline(isSupabaseAvailable());
     }, 30000);
@@ -1289,6 +1346,7 @@ export default function App() {
     try {
       const { error } = await supabase!.from('schools').insert([newSchool]);
       if (error) throw error;
+      // Data will auto-refresh
     } catch (err: any) {
       console.error('Error adding school:', err);
       setError(`Failed to save school: ${err.message}`);
@@ -1483,6 +1541,11 @@ export default function App() {
   const klassStudents = students.filter((s: any) => s.class_id === klass?.id);
   const studentAsmts = asmts.filter((a: any) => a.student_id === student?.id);
 
+  // ── Manual Refresh ──────────────────────────────────────────────────────────
+  const handleManualRefresh = () => {
+    loadData(true);
+  };
+
   // ── Loading State ──────────────────────────────────────────────────────────
   if (loading) {
     return (
@@ -1503,7 +1566,7 @@ export default function App() {
           <WifiOff size={56} className="text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-bold mb-2">Connection Error</h2>
           <p className="text-muted-foreground mb-6">{error}</p>
-          <button onClick={loadData} className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 rounded-xl font-semibold hover:opacity-90 mx-auto">
+          <button onClick={handleManualRefresh} className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 rounded-xl font-semibold hover:opacity-90 mx-auto">
             <RefreshCw size={18} /> Retry
           </button>
         </div>
@@ -1518,7 +1581,7 @@ export default function App() {
           <AlertCircle size={56} className="text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-bold mb-2">Error</h2>
           <p className="text-muted-foreground mb-6">{error}</p>
-          <button onClick={loadData} className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 rounded-xl font-semibold hover:opacity-90 mx-auto">
+          <button onClick={handleManualRefresh} className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 rounded-xl font-semibold hover:opacity-90 mx-auto">
             <RefreshCw size={18} /> Retry
           </button>
         </div>
@@ -1529,17 +1592,32 @@ export default function App() {
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <div className="flex h-screen bg-background overflow-hidden">
-      {/* Connection Status Bar */}
-      <div className={`fixed top-0 left-0 right-0 z-50 px-4 py-1.5 text-xs text-center font-medium ${isOnline ? 'bg-emerald-50 text-emerald-700 border-b border-emerald-200' : 'bg-amber-50 text-amber-700 border-b border-amber-200'}`}>
-        {isOnline ? (
-          <span className="flex items-center justify-center gap-2">
-            <Wifi size={12} /> Connected to Database | Real-time updates active
+      {/* Connection Status Bar with Auto-Refresh Indicator */}
+      <div className={`fixed top-0 left-0 right-0 z-50 px-4 py-1.5 text-xs text-center font-medium flex items-center justify-between ${isOnline ? 'bg-emerald-50 text-emerald-700 border-b border-emerald-200' : 'bg-amber-50 text-amber-700 border-b border-amber-200'}`}>
+        <span className="flex items-center gap-2">
+          {isOnline ? (
+            <>
+              <Wifi size={12} /> Connected
+            </>
+          ) : (
+            <>
+              <WifiOff size={12} /> Offline
+            </>
+          )}
+        </span>
+        <span className="flex items-center gap-2">
+          <RefreshCw size={12} className={isOnline ? 'animate-spin' : ''} />
+          Auto-refresh every 1s
+          <span className="text-xs opacity-60 ml-1">
+            {lastRefresh.toLocaleTimeString()}
           </span>
-        ) : (
-          <span className="flex items-center justify-center gap-2">
-            <WifiOff size={12} /> Offline - Changes will be saved when connection is restored
-          </span>
-        )}
+        </span>
+        <button 
+          onClick={handleManualRefresh}
+          className="text-xs font-semibold hover:underline"
+        >
+          Refresh now
+        </button>
       </div>
 
       {/* Sidebar */}
@@ -1588,6 +1666,10 @@ export default function App() {
           <div className="flex items-center justify-between text-xs">
             <span className="text-white/40">Documents</span>
             <span className="text-white/70 font-mono font-bold">{docs.length}</span>
+          </div>
+          <div className="flex items-center justify-between text-xs pt-1 border-t border-white/10">
+            <span className="text-white/40">Auto-refresh</span>
+            <span className="text-white/70 font-mono text-[10px]">Every 1s</span>
           </div>
         </div>
       </aside>
