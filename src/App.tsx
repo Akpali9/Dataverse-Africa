@@ -3,10 +3,11 @@ import {
   Building2, BookOpen, Users, ChevronRight, Plus, X,
   FileText, Github, Download, Trash2, GraduationCap,
   ExternalLink, Save, Pencil, Check, BarChart2, ClipboardList,
-  Edit2, Camera, Loader2, RefreshCw, Search, AlertCircle, Wifi, WifiOff,
+  Edit2, Camera, Loader2, RefreshCw, Search, AlertCircle,
+  Wifi, WifiOff, Home, LogOut, User, Mail, Phone, MapPin,
+  Calendar, Award, TrendingUp, Settings, Menu
 } from "lucide-react";
 import { supabase, isSupabaseAvailable } from './lib/supabase';
-import { useLocalStorage } from './hooks/useLocalStorage';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type View = "schools" | "classes" | "students" | "student" | "docs";
@@ -39,17 +40,13 @@ interface Doc {
   year: string; created_at?: string;
 }
 
-interface TermGrade {
-  term: Term;
-  grade: Grade;
-  percentage: number;
-  year: string;
-}
-
 // ── Constants ─────────────────────────────────────────────────────────────────
 const CURRENT_YEAR = "2024-2025";
 const TL: Record<Term, string> = { 1: "First Term", 2: "Second Term", 3: "Third Term" };
-const AL: Record<AType, string> = { test1: "Test 1", test2: "Test 2", test3: "Test 3", project: "Project", exam: "Final Exam" };
+const AL: Record<AType, string> = { 
+  test1: "Test 1", test2: "Test 2", test3: "Test 3", 
+  project: "Project", exam: "Final Exam" 
+};
 const AMAX: Record<AType, number> = { test1: 30, test2: 30, test3: 30, project: 50, exam: 100 };
 const ATYPES: AType[] = ["test1", "test2", "test3", "project", "exam"];
 
@@ -86,8 +83,8 @@ const barCls = (s: number, m: number) => {
   return p >= 80 ? "bg-emerald-500" : p >= 60 ? "bg-amber-500" : "bg-red-500";
 };
 
-const inputCls = "w-full border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground";
-const labelCls = "text-xs font-semibold text-muted-foreground mb-1 block uppercase tracking-wide";
+const inputCls = "w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder:text-gray-400";
+const labelCls = "text-xs font-semibold text-gray-700 mb-1.5 block uppercase tracking-wide";
 
 function dlDoc(doc: Doc) {
   const sep = "─".repeat(60);
@@ -125,7 +122,7 @@ function Avatar({ student, size = "md", editable = false, onUpload }: {
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
     >
-      <div className={`${sizes[size]} rounded-full flex items-center justify-center font-bold text-white flex-shrink-0 overflow-hidden bg-gradient-to-br from-primary/80 to-primary`}>
+      <div className={`${sizes[size]} rounded-full flex items-center justify-center font-bold text-white flex-shrink-0 overflow-hidden bg-gradient-to-br from-blue-600 to-purple-600 shadow-md`}>
         {student.avatar ? (
           <img src={student.avatar} alt={initials} className="w-full h-full object-cover" />
         ) : initials}
@@ -143,41 +140,56 @@ function Avatar({ student, size = "md", editable = false, onUpload }: {
 // ── Modals ──────────────────────────────────────────────────────────────────
 
 function AddSchoolModal({ onSave, onClose }: { onSave: (s: School) => void; onClose: () => void }) {
-  const [f, setF] = useState({ name: "", address: "", principal: "", email: "", phone: "", color: "#1e3a5f" });
-  const COLORS = ["#1e3a5f", "#166534", "#7c2d12", "#5b21b6", "#0e7490", "#92400e", "#b45309", "#065f46"];
+  const [f, setF] = useState({ name: "", address: "", principal: "", email: "", phone: "", color: "#3b82f6" });
+  const COLORS = ["#3b82f6", "#10b981", "#8b5cf6", "#f59e0b", "#ef4444", "#ec4899", "#14b8a6", "#f97316"];
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => setF(p => ({ ...p, [k]: e.target.value }));
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-          <h2 className="font-bold text-base">Add New School</h2>
-          <button onClick={onClose} className="p-1.5 hover:bg-muted rounded-lg"><X size={16} /></button>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-in fade-in zoom-in duration-200">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <h2 className="font-bold text-lg text-gray-900">Add New School</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors"><X size={18} /></button>
         </div>
-        <div className="px-6 py-5 space-y-4">
-          <div><label className={labelCls}>School Name *</label><input value={f.name} onChange={set("name")} className={inputCls} /></div>
-          <div><label className={labelCls}>Address</label><input value={f.address} onChange={set("address")} className={inputCls} /></div>
-          <div className="grid grid-cols-2 gap-3">
-            <div><label className={labelCls}>Principal</label><input value={f.principal} onChange={set("principal")} className={inputCls} /></div>
-            <div><label className={labelCls}>Phone</label><input value={f.phone} onChange={set("phone")} className={inputCls} /></div>
+        <div className="px-6 py-6 space-y-4">
+          <div>
+            <label className={labelCls}>School Name *</label>
+            <input value={f.name} onChange={set("name")} placeholder="e.g. Greenfield Academy" className={inputCls} />
           </div>
-          <div><label className={labelCls}>Email</label><input value={f.email} onChange={set("email")} type="email" className={inputCls} /></div>
+          <div>
+            <label className={labelCls}>Address</label>
+            <input value={f.address} onChange={set("address")} placeholder="14 Oak Lane, Springfield" className={inputCls} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelCls}>Principal</label>
+              <input value={f.principal} onChange={set("principal")} placeholder="Dr. Name" className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>Phone</label>
+              <input value={f.phone} onChange={set("phone")} placeholder="+1 555-0000" className={inputCls} />
+            </div>
+          </div>
+          <div>
+            <label className={labelCls}>Email</label>
+            <input value={f.email} onChange={set("email")} type="email" placeholder="info@school.edu" className={inputCls} />
+          </div>
           <div>
             <label className={labelCls}>School Colour</label>
             <div className="flex gap-2.5 flex-wrap mt-1">
               {COLORS.map(c => (
                 <button key={c} onClick={() => setF(p => ({ ...p, color: c }))}
-                  className="w-8 h-8 rounded-full transition-transform hover:scale-110"
-                  style={{ background: c, boxShadow: f.color === c ? `0 0 0 2px white, 0 0 0 4px ${c}` : undefined }}
+                  className="w-9 h-9 rounded-full transition-all hover:scale-110"
+                  style={{ background: c, boxShadow: f.color === c ? `0 0 0 3px white, 0 0 0 5px ${c}` : undefined }}
                 />
               ))}
             </div>
           </div>
         </div>
-        <div className="flex gap-3 px-6 pb-5">
-          <button onClick={onClose} className="flex-1 py-2.5 border border-border rounded-xl text-sm hover:bg-muted">Cancel</button>
+        <div className="flex gap-3 px-6 pb-6">
+          <button onClick={onClose} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors">Cancel</button>
           <button onClick={() => { if (!f.name.trim()) return; onSave({ id: uid(), ...f }); onClose(); }}
-            className="flex-1 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:opacity-90">
+            className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm">
             Save School
           </button>
         </div>
@@ -192,16 +204,25 @@ function AddClassModal({ schoolId, onSave, onClose }: { schoolId: string; onSave
   const years = ["2023-2024", "2024-2025", "2025-2026"];
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-          <h2 className="font-bold text-base">Add New Class</h2>
-          <button onClick={onClose} className="p-1.5 hover:bg-muted rounded-lg"><X size={16} /></button>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm animate-in fade-in zoom-in duration-200">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <h2 className="font-bold text-lg text-gray-900">Add New Class</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg"><X size={18} /></button>
         </div>
-        <div className="px-6 py-5 space-y-4">
-          <div><label className={labelCls}>Class Name *</label><input value={f.name} onChange={set("name")} className={inputCls} /></div>
-          <div><label className={labelCls}>Subject</label><input value={f.subject} onChange={set("subject")} className={inputCls} /></div>
-          <div><label className={labelCls}>Class Teacher</label><input value={f.teacher} onChange={set("teacher")} className={inputCls} /></div>
+        <div className="px-6 py-6 space-y-4">
+          <div>
+            <label className={labelCls}>Class Name *</label>
+            <input value={f.name} onChange={set("name")} placeholder="e.g. Grade 10A" className={inputCls} />
+          </div>
+          <div>
+            <label className={labelCls}>Subject</label>
+            <input value={f.subject} onChange={set("subject")} placeholder="e.g. Mathematics" className={inputCls} />
+          </div>
+          <div>
+            <label className={labelCls}>Class Teacher</label>
+            <input value={f.teacher} onChange={set("teacher")} placeholder="Ms. Name" className={inputCls} />
+          </div>
           <div>
             <label className={labelCls}>Academic Year</label>
             <select value={f.academicYear} onChange={set("academicYear")} className={inputCls}>
@@ -209,10 +230,10 @@ function AddClassModal({ schoolId, onSave, onClose }: { schoolId: string; onSave
             </select>
           </div>
         </div>
-        <div className="flex gap-3 px-6 pb-5">
-          <button onClick={onClose} className="flex-1 py-2.5 border border-border rounded-xl text-sm hover:bg-muted">Cancel</button>
+        <div className="flex gap-3 px-6 pb-6">
+          <button onClick={onClose} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50">Cancel</button>
           <button onClick={() => { if (!f.name.trim()) return; onSave({ id: uid(), schoolId, ...f }); onClose(); }}
-            className="flex-1 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:opacity-90">
+            className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors">
             Save Class
           </button>
         </div>
@@ -226,26 +247,44 @@ function AddStudentModal({ classId, onSave, onClose }: { classId: string; onSave
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => setF(p => ({ ...p, [k]: e.target.value }));
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-          <h2 className="font-bold text-base">Add New Student</h2>
-          <button onClick={onClose} className="p-1.5 hover:bg-muted rounded-lg"><X size={16} /></button>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm animate-in fade-in zoom-in duration-200">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <h2 className="font-bold text-lg text-gray-900">Add New Student</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg"><X size={18} /></button>
         </div>
-        <div className="px-6 py-5 space-y-4">
+        <div className="px-6 py-6 space-y-4">
           <div className="grid grid-cols-2 gap-3">
-            <div><label className={labelCls}>First Name *</label><input value={f.firstName} onChange={set("firstName")} className={inputCls} /></div>
-            <div><label className={labelCls}>Last Name *</label><input value={f.lastName} onChange={set("lastName")} className={inputCls} /></div>
+            <div>
+              <label className={labelCls}>First Name *</label>
+              <input value={f.firstName} onChange={set("firstName")} placeholder="Kofi" className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>Last Name *</label>
+              <input value={f.lastName} onChange={set("lastName")} placeholder="Mensah" className={inputCls} />
+            </div>
           </div>
-          <div><label className={labelCls}>Email</label><input value={f.email} onChange={set("email")} type="email" className={inputCls} /></div>
-          <div><label className={labelCls}>GitHub Username</label><input value={f.github} onChange={set("github")} className={inputCls} /></div>
-          <div><label className={labelCls}>Phone</label><input value={f.phone} onChange={set("phone")} className={inputCls} /></div>
-          <div><label className={labelCls}>Address</label><input value={f.address} onChange={set("address")} className={inputCls} /></div>
+          <div>
+            <label className={labelCls}>Email</label>
+            <input value={f.email} onChange={set("email")} type="email" placeholder="student@school.edu" className={inputCls} />
+          </div>
+          <div>
+            <label className={labelCls}>GitHub Username</label>
+            <input value={f.github} onChange={set("github")} placeholder="github-username" className={inputCls} />
+          </div>
+          <div>
+            <label className={labelCls}>Phone</label>
+            <input value={f.phone} onChange={set("phone")} placeholder="+233 20 123 4567" className={inputCls} />
+          </div>
+          <div>
+            <label className={labelCls}>Address</label>
+            <input value={f.address} onChange={set("address")} placeholder="City, Country" className={inputCls} />
+          </div>
         </div>
-        <div className="flex gap-3 px-6 pb-5">
-          <button onClick={onClose} className="flex-1 py-2.5 border border-border rounded-xl text-sm hover:bg-muted">Cancel</button>
+        <div className="flex gap-3 px-6 pb-6">
+          <button onClick={onClose} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50">Cancel</button>
           <button onClick={() => { if (!f.firstName.trim()) return; onSave({ id: uid(), classId, ...f }); onClose(); }}
-            className="flex-1 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:opacity-90">
+            className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors">
             Add Student
           </button>
         </div>
@@ -259,13 +298,13 @@ function EditProfileModal({ student, onSave, onClose }: { student: Student; onSa
   const set = (k: keyof Student) => (e: React.ChangeEvent<HTMLInputElement>) => setF(p => ({ ...p, [k]: e.target.value }));
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border sticky top-0 bg-white z-10">
-          <h2 className="font-bold text-base">Edit Profile</h2>
-          <button onClick={onClose} className="p-1.5 hover:bg-muted rounded-lg"><X size={16} /></button>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in duration-200">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
+          <h2 className="font-bold text-lg text-gray-900">Edit Profile</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg"><X size={18} /></button>
         </div>
-        <div className="px-6 py-5 space-y-4">
+        <div className="px-6 py-6 space-y-4">
           <div className="flex justify-center mb-4"><Avatar student={f} size="xl" editable={false} /></div>
           <div className="grid grid-cols-2 gap-3">
             <div><label className={labelCls}>First Name *</label><input value={f.firstName} onChange={set("firstName")} className={inputCls} /></div>
@@ -279,10 +318,10 @@ function EditProfileModal({ student, onSave, onClose }: { student: Student; onSa
           <div><label className={labelCls}>Guardian Name</label><input value={f.guardianName || ""} onChange={set("guardianName")} className={inputCls} /></div>
           <div><label className={labelCls}>Guardian Phone</label><input value={f.guardianPhone || ""} onChange={set("guardianPhone")} className={inputCls} /></div>
         </div>
-        <div className="flex gap-3 px-6 pb-5 sticky bottom-0 bg-white pt-4 border-t border-border">
-          <button onClick={onClose} className="flex-1 py-2.5 border border-border rounded-xl text-sm hover:bg-muted">Cancel</button>
+        <div className="flex gap-3 px-6 pb-6 sticky bottom-0 bg-white pt-4 border-t border-gray-100">
+          <button onClick={onClose} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50">Cancel</button>
           <button onClick={() => { onSave(f); onClose(); }}
-            className="flex-1 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:opacity-90">
+            className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors">
             Save Changes
           </button>
         </div>
@@ -299,24 +338,24 @@ function AddDocModal({ schools, klasses, onSave, onClose }: { schools: School[];
     setF(p => ({ ...p, [k]: e.target.value }));
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border flex-shrink-0">
-          <h2 className="font-bold text-base">Create Document</h2>
-          <button onClick={onClose} className="p-1.5 hover:bg-muted rounded-lg"><X size={16} /></button>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col animate-in fade-in zoom-in duration-200">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
+          <h2 className="font-bold text-lg text-gray-900">Create Document</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg"><X size={18} /></button>
         </div>
-        <div className="px-6 py-5 space-y-4 overflow-y-auto flex-1">
+        <div className="px-6 py-6 space-y-4 overflow-y-auto flex-1">
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={labelCls}>School *</label>
-              <select value={f.schoolId} onChange={setS("schoolId")} className={inputCls + " cursor-pointer"}>
+              <select value={f.schoolId} onChange={setS("schoolId")} className={inputCls}>
                 <option value="">— Select school —</option>
                 {schools.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </div>
             <div>
               <label className={labelCls}>Class</label>
-              <select value={f.classId} onChange={setS("classId")} disabled={!f.schoolId} className={inputCls + " cursor-pointer disabled:opacity-50"}>
+              <select value={f.classId} onChange={setS("classId")} disabled={!f.schoolId} className={inputCls + " disabled:opacity-50"}>
                 <option value="">— Select class —</option>
                 {filteredK.map(k => <option key={k.id} value={k.id}>{k.name}</option>)}
               </select>
@@ -325,7 +364,7 @@ function AddDocModal({ schools, klasses, onSave, onClose }: { schools: School[];
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={labelCls}>Term</label>
-              <select value={f.term} onChange={setS("term")} className={inputCls + " cursor-pointer"}>
+              <select value={f.term} onChange={setS("term")} className={inputCls}>
                 <option value="1">First Term</option>
                 <option value="2">Second Term</option>
                 <option value="3">Third Term</option>
@@ -333,31 +372,31 @@ function AddDocModal({ schools, klasses, onSave, onClose }: { schools: School[];
             </div>
             <div>
               <label className={labelCls}>Type</label>
-              <select value={f.type} onChange={setS("type")} className={inputCls + " cursor-pointer"}>
+              <select value={f.type} onChange={setS("type")} className={inputCls}>
                 {ATYPES.map(t => <option key={t} value={t}>{AL[t]}</option>)}
               </select>
             </div>
           </div>
           <div>
             <label className={labelCls}>Academic Year</label>
-            <select value={f.year} onChange={setS("year")} className={inputCls + " cursor-pointer"}>
+            <select value={f.year} onChange={setS("year")} className={inputCls}>
               {years.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
           </div>
           <div>
             <label className={labelCls}>Document Title *</label>
-            <input value={f.title} onChange={setS("title")} className={inputCls} />
+            <input value={f.title} onChange={setS("title")} placeholder="e.g. Grade 10A First Term Exam" className={inputCls} />
           </div>
           <div>
             <label className={labelCls}>Questions / Content</label>
-            <textarea value={f.content} onChange={setS("content")} rows={12}
-              className="w-full border border-border rounded-xl px-3 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 font-mono resize-none" />
+            <textarea value={f.content} onChange={setS("content")} rows={10}
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono resize-none" />
           </div>
         </div>
-        <div className="flex gap-3 px-6 pb-5 border-t border-border pt-4 flex-shrink-0">
-          <button onClick={onClose} className="flex-1 py-2.5 border border-border rounded-xl text-sm hover:bg-muted">Cancel</button>
+        <div className="flex gap-3 px-6 pb-6 border-t border-gray-100 pt-4 flex-shrink-0">
+          <button onClick={onClose} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50">Cancel</button>
           <button onClick={() => { if (!f.title.trim() || !f.schoolId) return; onSave({ id: uid(), schoolId: f.schoolId, classId: f.classId || null, term: Number(f.term) as Term, type: f.type, title: f.title, content: f.content, createdAt: today(), year: f.year }); onClose(); }}
-            className="flex-1 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:opacity-90">
+            className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors">
             Create Document
           </button>
         </div>
@@ -370,49 +409,49 @@ function AddDocModal({ schools, klasses, onSave, onClose }: { schools: School[];
 
 function SchoolsView({ schools, onOpen, onAdd, onDelete }: { schools: School[]; onOpen: (s: School) => void; onAdd: () => void; onDelete: (id: string) => void }) {
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+    <div className="p-6 max-w-7xl mx-auto w-full">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Schools</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{schools.length} registered {schools.length === 1 ? "school" : "schools"}</p>
+          <h1 className="text-2xl font-bold text-gray-900">Schools</h1>
+          <p className="text-sm text-gray-500 mt-1">{schools.length} registered {schools.length === 1 ? "school" : "schools"}</p>
         </div>
-        <button onClick={onAdd} className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 shadow-sm w-full sm:w-auto justify-center">
-          <Plus size={16} /> Add School
+        <button onClick={onAdd} className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700 transition-all shadow-sm hover:shadow-md">
+          <Plus size={18} /> Add School
         </button>
       </div>
       {schools.length === 0 ? (
-        <div className="text-center py-24 text-muted-foreground">
-          <Building2 size={44} className="mx-auto mb-4 opacity-20" />
-          <p className="font-medium">No schools yet</p>
-          <p className="text-sm mt-1">Add your first school to get started.</p>
+        <div className="text-center py-16 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+          <Building2 size={48} className="mx-auto mb-4 text-gray-300" />
+          <p className="text-gray-600 font-medium">No schools yet</p>
+          <p className="text-sm text-gray-400 mt-1">Add your first school to get started</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {schools.map(school => (
-            <div key={school.id} className="bg-card rounded-2xl border border-border overflow-hidden hover:shadow-lg transition-shadow group">
+            <div key={school.id} className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all group">
               <div className="h-1.5" style={{ background: school.color }} />
-              <div className="p-4 sm:p-5">
+              <div className="p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center text-white text-sm font-bold flex-shrink-0" style={{ background: school.color }}>
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white text-lg font-bold flex-shrink-0 shadow-sm" style={{ background: school.color }}>
                       {school.name.split(" ").map(w => w[0]).slice(0, 2).join("")}
                     </div>
                     <div className="min-w-0">
-                      <h3 className="font-bold text-sm leading-tight truncate">{school.name}</h3>
-                      <p className="text-xs text-muted-foreground mt-0.5 truncate">{school.principal}</p>
+                      <h3 className="font-bold text-gray-900 truncate">{school.name}</h3>
+                      <p className="text-xs text-gray-500 truncate">{school.principal}</p>
                     </div>
                   </div>
-                  <button onClick={() => onDelete(school.id)} className="p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all flex-shrink-0">
-                    <Trash2 size={13} />
+                  <button onClick={() => onDelete(school.id)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all">
+                    <Trash2 size={16} />
                   </button>
                 </div>
-                <p className="text-xs text-muted-foreground mb-3 leading-relaxed line-clamp-2">{school.address}</p>
-                <div className="text-xs text-muted-foreground space-y-1 font-mono truncate">
+                <p className="text-sm text-gray-500 mb-4 line-clamp-2">{school.address}</p>
+                <div className="text-xs text-gray-400 space-y-1">
                   <div className="truncate">{school.email}</div>
                   <div>{school.phone}</div>
                 </div>
-                <button onClick={() => onOpen(school)} className="mt-4 w-full flex items-center justify-center gap-1.5 text-sm font-semibold py-2.5 rounded-xl transition-colors border border-border hover:bg-primary hover:text-primary-foreground hover:border-primary">
-                  View Classes <ChevronRight size={14} />
+                <button onClick={() => onOpen(school)} className="mt-4 w-full flex items-center justify-center gap-2 text-sm font-semibold py-2.5 rounded-xl transition-all border border-gray-200 hover:bg-blue-600 hover:text-white hover:border-blue-600">
+                  View Classes <ChevronRight size={16} />
                 </button>
               </div>
             </div>
@@ -425,56 +464,56 @@ function SchoolsView({ schools, onOpen, onAdd, onDelete }: { schools: School[]; 
 
 function ClassesView({ school, klasses, students, onOpen, onAdd, onBack, onDelete }: { school: School; klasses: Klass[]; students: Student[]; onOpen: (k: Klass) => void; onAdd: () => void; onBack: () => void; onDelete: (id: string) => void }) {
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
-      <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-4 sm:mb-6 overflow-x-auto">
-        <button onClick={onBack} className="hover:text-foreground transition-colors whitespace-nowrap">Schools</button>
-        <ChevronRight size={14} className="flex-shrink-0" />
-        <span className="text-foreground font-semibold truncate">{school.name}</span>
+    <div className="p-6 max-w-7xl mx-auto w-full">
+      <nav className="flex items-center gap-2 text-sm text-gray-500 mb-6">
+        <button onClick={onBack} className="hover:text-gray-700 transition-colors">Schools</button>
+        <ChevronRight size={14} />
+        <span className="text-gray-900 font-semibold">{school.name}</span>
       </nav>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center text-white text-sm font-bold flex-shrink-0" style={{ background: school.color }}>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white text-lg font-bold flex-shrink-0 shadow-sm" style={{ background: school.color }}>
             {school.name.split(" ").map(w => w[0]).slice(0, 2).join("")}
           </div>
-          <div className="min-w-0">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight truncate">{school.name}</h1>
-            <p className="text-sm text-muted-foreground truncate">{klasses.length} {klasses.length === 1 ? "class" : "classes"} · {school.principal}</p>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">{school.name}</h1>
+            <p className="text-sm text-gray-500">{klasses.length} {klasses.length === 1 ? "class" : "classes"} · {school.principal}</p>
           </div>
         </div>
-        <button onClick={onAdd} className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 shadow-sm w-full sm:w-auto justify-center">
-          <Plus size={16} /> Add Class
+        <button onClick={onAdd} className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700 transition-all shadow-sm hover:shadow-md">
+          <Plus size={18} /> Add Class
         </button>
       </div>
       {klasses.length === 0 ? (
-        <div className="text-center py-24 text-muted-foreground">
-          <BookOpen size={44} className="mx-auto mb-4 opacity-20" />
-          <p className="font-medium">No classes yet</p>
-          <p className="text-sm mt-1">Add the first class to this school.</p>
+        <div className="text-center py-16 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+          <BookOpen size={48} className="mx-auto mb-4 text-gray-300" />
+          <p className="text-gray-600 font-medium">No classes yet</p>
+          <p className="text-sm text-gray-400 mt-1">Add the first class to this school</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {klasses.map(k => {
             const count = students.filter(s => s.classId === k.id).length;
             return (
-              <div key={k.id} className="bg-card rounded-2xl border border-border p-4 sm:p-5 hover:shadow-md transition-shadow group">
+              <div key={k.id} className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-md transition-all group">
                 <div className="flex items-start justify-between mb-4">
-                  <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
-                    <BookOpen size={16} className="text-primary" />
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+                    <BookOpen size={18} className="text-blue-600" />
                   </div>
-                  <button onClick={() => onDelete(k.id)} className="p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all">
-                    <Trash2 size={13} />
+                  <button onClick={() => onDelete(k.id)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all">
+                    <Trash2 size={16} />
                   </button>
                 </div>
-                <h3 className="font-bold text-sm truncate">{k.name}</h3>
-                <p className="text-xs text-muted-foreground mt-0.5 truncate">{k.subject}</p>
-                <p className="text-xs text-muted-foreground truncate">{k.teacher}</p>
-                <p className="text-xs text-muted-foreground mt-1 font-mono">{k.academicYear}</p>
-                <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
-                  <span className="text-xs bg-muted text-muted-foreground px-2.5 py-1 rounded-full font-medium">
+                <h3 className="font-bold text-gray-900">{k.name}</h3>
+                <p className="text-sm text-gray-500">{k.subject}</p>
+                <p className="text-sm text-gray-500">{k.teacher}</p>
+                <p className="text-xs text-gray-400 mt-2 font-mono">{k.academicYear}</p>
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                  <span className="text-sm bg-gray-100 text-gray-600 px-3 py-1 rounded-full font-medium">
                     {count} {count !== 1 ? "students" : "student"}
                   </span>
-                  <button onClick={() => onOpen(k)} className="flex items-center gap-1 text-xs font-semibold text-primary hover:underline">
-                    View Students <ChevronRight size={12} />
+                  <button onClick={() => onOpen(k)} className="flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-700">
+                    View Students <ChevronRight size={14} />
                   </button>
                 </div>
               </div>
@@ -488,76 +527,93 @@ function ClassesView({ school, klasses, students, onOpen, onAdd, onBack, onDelet
 
 function StudentsView({ school, klass, students, asmts, onOpen, onAdd, onBack, onBackSchool, onDelete }: { school: School; klass: Klass; students: Student[]; asmts: Asmt[]; onOpen: (s: Student) => void; onAdd: () => void; onBack: () => void; onBackSchool: () => void; onDelete: (id: string) => void }) {
   const [search, setSearch] = useState("");
-  const filteredStudents = students.filter(s => `${s.firstName} ${s.lastName}`.toLowerCase().includes(search.toLowerCase()) || s.email?.toLowerCase().includes(search.toLowerCase()));
+  const filteredStudents = students.filter(s => 
+    `${s.firstName} ${s.lastName}`.toLowerCase().includes(search.toLowerCase()) || 
+    s.email?.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
-      <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-4 sm:mb-6 overflow-x-auto">
-        <button onClick={onBackSchool} className="hover:text-foreground transition-colors whitespace-nowrap">Schools</button>
-        <ChevronRight size={14} className="flex-shrink-0" />
-        <button onClick={onBack} className="hover:text-foreground transition-colors whitespace-nowrap truncate max-w-[120px]">{school.name}</button>
-        <ChevronRight size={14} className="flex-shrink-0" />
-        <span className="text-foreground font-semibold truncate">{klass.name}</span>
+    <div className="p-6 max-w-7xl mx-auto w-full">
+      <nav className="flex items-center gap-2 text-sm text-gray-500 mb-6 flex-wrap">
+        <button onClick={onBackSchool} className="hover:text-gray-700 transition-colors">Schools</button>
+        <ChevronRight size={14} />
+        <button onClick={onBack} className="hover:text-gray-700 transition-colors">{school.name}</button>
+        <ChevronRight size={14} />
+        <span className="text-gray-900 font-semibold">{klass.name}</span>
       </nav>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-4">
-        <div className="min-w-0">
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight truncate">{klass.name}</h1>
-          <p className="text-sm text-muted-foreground truncate">{klass.subject} · {klass.teacher} · {students.length} {students.length === 1 ? "student" : "students"}</p>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">{klass.name}</h1>
+          <p className="text-sm text-gray-500">{klass.subject} · {klass.teacher} · {students.length} {students.length === 1 ? "student" : "students"}</p>
         </div>
-        <button onClick={onAdd} className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 shadow-sm w-full sm:w-auto justify-center">
-          <Plus size={16} /> Add Student
+        <button onClick={onAdd} className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700 transition-all shadow-sm hover:shadow-md">
+          <Plus size={18} /> Add Student
         </button>
       </div>
-      <div className="relative mb-4">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search students..." className="w-full pl-9 pr-4 py-2 border border-border rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20" />
+      
+      <div className="relative mb-6">
+        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+        <input 
+          value={search} 
+          onChange={e => setSearch(e.target.value)} 
+          placeholder="Search students by name or email..." 
+          className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+        />
       </div>
+
       {filteredStudents.length === 0 ? (
-        <div className="text-center py-24 text-muted-foreground">
-          <Users size={44} className="mx-auto mb-4 opacity-20" />
-          <p className="font-medium">No students found</p>
-          <p className="text-sm mt-1">{students.length > 0 ? "Try adjusting your search" : "Add the first student to this class."}</p>
+        <div className="text-center py-16 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+          <Users size={48} className="mx-auto mb-4 text-gray-300" />
+          <p className="text-gray-600 font-medium">No students found</p>
+          <p className="text-sm text-gray-400 mt-1">{students.length > 0 ? "Try adjusting your search" : "Add the first student to this class"}</p>
         </div>
       ) : (
-        <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
+        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border bg-muted/30">
-                  <th className="text-left px-3 sm:px-5 py-3.5 text-xs font-bold text-muted-foreground uppercase tracking-wider">Student</th>
-                  <th className="text-left px-3 sm:px-4 py-3.5 text-xs font-bold text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Email</th>
-                  <th className="text-left px-3 sm:px-4 py-3.5 text-xs font-bold text-muted-foreground uppercase tracking-wider hidden lg:table-cell">GitHub</th>
-                  <th className="text-left px-3 sm:px-4 py-3.5 text-xs font-bold text-muted-foreground uppercase tracking-wider">Avg</th>
-                  <th className="px-3 sm:px-4 py-3.5"></th>
+                <tr className="border-b border-gray-200 bg-gray-50">
+                  <th className="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Student</th>
+                  <th className="text-left px-4 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider hidden md:table-cell">Email</th>
+                  <th className="text-left px-4 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider hidden lg:table-cell">GitHub</th>
+                  <th className="text-left px-4 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Avg</th>
+                  <th className="px-4 py-4"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-gray-100">
                 {filteredStudents.map(st => {
                   const stAsmts = asmts.filter(a => a.studentId === st.id && a.year === klass.academicYear);
                   const avg = avgPct(stAsmts);
                   return (
-                    <tr key={st.id} className="hover:bg-muted/20 transition-colors group">
-                      <td className="px-3 sm:px-5 py-3.5">
-                        <div className="flex items-center gap-2 sm:gap-3">
+                    <tr key={st.id} className="hover:bg-gray-50 transition-colors group">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
                           <Avatar student={st} size="sm" />
-                          <span className="font-semibold text-sm truncate max-w-[120px] sm:max-w-none">{st.firstName} {st.lastName}</span>
+                          <span className="font-semibold text-gray-900">{st.firstName} {st.lastName}</span>
                         </div>
                       </td>
-                      <td className="px-3 sm:px-4 py-3.5 text-muted-foreground text-xs font-mono hidden sm:table-cell truncate max-w-[150px]">{st.email}</td>
-                      <td className="px-3 sm:px-4 py-3.5 hidden lg:table-cell">
-                        {st.github && <a href={`https://github.com/${st.github}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                          <Github size={12} /> <span className="truncate max-w-[100px]">{st.github}</span>
-                        </a>}
+                      <td className="px-4 py-4 text-gray-500 text-sm hidden md:table-cell">{st.email}</td>
+                      <td className="px-4 py-4 hidden lg:table-cell">
+                        {st.github && (
+                          <a href={`https://github.com/${st.github}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors">
+                            <Github size={14} />
+                            <span>{st.github}</span>
+                          </a>
+                        )}
                       </td>
-                      <td className="px-3 sm:px-4 py-3.5">
-                        {avg !== null && <span className={`text-xs font-mono font-bold px-2 py-1 rounded-full ${avg >= 80 ? "bg-emerald-50 text-emerald-700" : avg >= 60 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700"}`}>{avg}%</span>}
+                      <td className="px-4 py-4">
+                        {avg !== null && (
+                          <span className={`text-sm font-bold px-3 py-1 rounded-full ${avg >= 80 ? "bg-emerald-50 text-emerald-700" : avg >= 60 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700"}`}>
+                            {avg}%
+                          </span>
+                        )}
                       </td>
-                      <td className="px-3 sm:px-4 py-3.5 text-right">
-                        <div className="flex items-center justify-end gap-1 sm:gap-2">
-                          <button onClick={() => onDelete(st.id)} className="p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all">
-                            <Trash2 size={12} />
+                      <td className="px-4 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button onClick={() => onDelete(st.id)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all">
+                            <Trash2 size={16} />
                           </button>
-                          <button onClick={() => onOpen(st)} className="px-2 sm:px-3.5 py-1.5 text-xs font-semibold text-primary border border-primary/20 rounded-lg hover:bg-primary hover:text-primary-foreground transition-colors whitespace-nowrap">
+                          <button onClick={() => onOpen(st)} className="px-4 py-1.5 text-sm font-semibold text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">
                             View Profile
                           </button>
                         </div>
@@ -574,7 +630,14 @@ function StudentsView({ school, klass, students, asmts, onOpen, onAdd, onBack, o
   );
 }
 
-function StudentDetailView({ school, klass, student, asmts, onUpdateScore, onBack, onBackClass, onBackSchool, onUpdateStudent }: { school: School; klass: Klass; student: Student; asmts: Asmt[]; onUpdateScore: (id: string, score: number) => void; onBack: () => void; onBackClass: () => void; onBackSchool: () => void; onUpdateStudent: (s: Student) => void }) {
+function StudentDetailView({ 
+  school, klass, student, asmts, onUpdateScore, onBack, onBackClass, onBackSchool, onUpdateStudent 
+}: { 
+  school: School; klass: Klass; student: Student; asmts: Asmt[]; 
+  onUpdateScore: (id: string, score: number) => void; 
+  onBack: () => void; onBackClass: () => void; onBackSchool: () => void; 
+  onUpdateStudent: (s: Student) => void;
+}) {
   const [term, setTerm] = useState<Term>(1);
   const [editId, setEditId] = useState<string | null>(null);
   const [editVal, setEditVal] = useState("");
@@ -586,13 +649,17 @@ function StudentDetailView({ school, klass, student, asmts, onUpdateScore, onBac
   const overall = avgPct(asmts.filter(a => a.year === selectedYear));
   const termAvg = avgPct(termAsmts);
   const yearAsmts = asmts.filter(a => a.year === selectedYear);
-  const termGrades: TermGrade[] = [1, 2, 3].map(t => {
+  const termGrades: { term: Term; grade: Grade; percentage: number; year: string }[] = [1, 2, 3].map(t => {
     const tAsmts = yearAsmts.filter(a => a.term === t);
     const p = avgPct(tAsmts);
     return { term: t as Term, grade: p !== null ? gradeStr(p, 100) : "F", percentage: p || 0, year: selectedYear };
   });
   const years = Array.from(new Set(asmts.map(a => a.year))).sort();
-  const typeIcons: Record<AType, React.ReactNode> = { test1: <ClipboardList size={14} />, test2: <ClipboardList size={14} />, test3: <ClipboardList size={14} />, project: <GraduationCap size={14} />, exam: <BarChart2 size={14} /> };
+  const typeIcons: Record<AType, React.ReactNode> = { 
+    test1: <ClipboardList size={16} />, test2: <ClipboardList size={16} />, 
+    test3: <ClipboardList size={16} />, project: <GraduationCap size={16} />, 
+    exam: <BarChart2 size={16} /> 
+  };
 
   const commitEdit = (a: Asmt) => {
     const v = parseFloat(editVal);
@@ -607,104 +674,162 @@ function StudentDetailView({ school, klass, student, asmts, onUpdateScore, onBac
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto w-full">
-      <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-4 sm:mb-6 flex-wrap">
-        <button onClick={onBackSchool} className="hover:text-foreground transition-colors whitespace-nowrap">Schools</button>
-        <ChevronRight size={14} className="flex-shrink-0" />
-        <button onClick={onBack} className="hover:text-foreground transition-colors whitespace-nowrap truncate max-w-[100px]">{school.name}</button>
-        <ChevronRight size={14} className="flex-shrink-0" />
-        <button onClick={onBackClass} className="hover:text-foreground transition-colors whitespace-nowrap truncate max-w-[100px]">{klass.name}</button>
-        <ChevronRight size={14} className="flex-shrink-0" />
-        <span className="text-foreground font-semibold truncate">{student.firstName} {student.lastName}</span>
+    <div className="p-6 max-w-5xl mx-auto w-full">
+      <nav className="flex items-center gap-2 text-sm text-gray-500 mb-6 flex-wrap">
+        <button onClick={onBackSchool} className="hover:text-gray-700 transition-colors">Schools</button>
+        <ChevronRight size={14} />
+        <button onClick={onBack} className="hover:text-gray-700 transition-colors">{school.name}</button>
+        <ChevronRight size={14} />
+        <button onClick={onBackClass} className="hover:text-gray-700 transition-colors">{klass.name}</button>
+        <ChevronRight size={14} />
+        <span className="text-gray-900 font-semibold truncate">{student.firstName} {student.lastName}</span>
       </nav>
 
-      <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 mb-6 shadow-sm">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <div className="flex items-center gap-4 w-full sm:w-auto">
+      <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6 shadow-sm">
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+          <div className="flex items-center gap-5 w-full md:w-auto">
             <Avatar student={student} size="lg" editable onUpload={handleAvatarUpload} />
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-xl font-bold tracking-tight truncate">{student.firstName} {student.lastName}</h1>
-                <button onClick={() => setShowEditProfile(true)} className="p-1.5 hover:bg-muted rounded-lg"><Edit2 size={14} className="text-muted-foreground" /></button>
+              <div className="flex items-center gap-3 flex-wrap">
+                <h1 className="text-2xl font-bold text-gray-900 truncate">{student.firstName} {student.lastName}</h1>
+                <button onClick={() => setShowEditProfile(true)} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
+                  <Edit2 size={16} className="text-gray-500" />
+                </button>
               </div>
-              <p className="text-sm text-muted-foreground truncate">{klass.name} · {klass.subject} · {school.name}</p>
-              <div className="flex flex-wrap items-center gap-3 mt-1.5">
-                <span className="text-xs text-muted-foreground font-mono truncate max-w-[150px] sm:max-w-none">{student.email}</span>
-                {student.github && <a href={`https://github.com/${student.github}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                  <Github size={12} /> <span className="truncate max-w-[80px]">{student.github}</span> <ExternalLink size={9} />
-                </a>}
+              <p className="text-sm text-gray-500">{klass.name} · {klass.subject} · {school.name}</p>
+              <div className="flex flex-wrap items-center gap-4 mt-2">
+                <span className="text-sm text-gray-500 font-mono">{student.email}</span>
+                {student.github && (
+                  <a href={`https://github.com/${student.github}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors">
+                    <Github size={14} />
+                    <span>{student.github}</span>
+                    <ExternalLink size={12} />
+                  </a>
+                )}
               </div>
             </div>
           </div>
-          {overall !== null && <div className="text-right flex-shrink-0 w-full sm:w-auto">
-            <div className={`text-2xl sm:text-3xl font-bold font-mono tabular-nums ${overall >= 80 ? "text-emerald-600" : overall >= 60 ? "text-amber-600" : "text-red-600"}`}>{overall}%</div>
-            <div className="text-xs text-muted-foreground mt-0.5">Overall Avg</div>
-          </div>}
+          {overall !== null && (
+            <div className="text-right flex-shrink-0 w-full md:w-auto">
+              <div className={`text-3xl font-bold font-mono ${overall >= 80 ? "text-emerald-600" : overall >= 60 ? "text-amber-600" : "text-red-600"}`}>
+                {overall}%
+              </div>
+              <div className="text-sm text-gray-500 mt-0.5">Overall Average</div>
+            </div>
+          )}
         </div>
-        <div className="mt-4 pt-4 border-t border-border">
-          <div className="flex flex-wrap items-center gap-2">
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Academic Year:</label>
-            <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} className="border border-border rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20">
+        <div className="mt-6 pt-6 border-t border-gray-100">
+          <div className="flex flex-wrap items-center gap-4">
+            <label className="text-sm font-semibold text-gray-700">Academic Year:</label>
+            <select 
+              value={selectedYear} 
+              onChange={e => setSelectedYear(e.target.value)} 
+              className="border border-gray-200 rounded-lg px-4 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
               {years.length > 0 ? years.map(y => <option key={y} value={y}>{y}</option>) : <option value={CURRENT_YEAR}>{CURRENT_YEAR}</option>}
             </select>
           </div>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-1 mb-6 bg-muted/40 rounded-xl p-1 w-fit border border-border">
+      <div className="flex gap-1 mb-6 bg-gray-100 rounded-xl p-1 w-fit">
         {([1, 2, 3] as Term[]).map(t => {
           const grade = termGrades.find(tg => tg.term === t);
-          return <button key={t} onClick={() => setTerm(t)} className={`px-3 sm:px-5 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 ${term === t ? "bg-white shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
-            {TL[t]} {grade && grade.percentage > 0 && <span className={`text-xs px-1.5 py-0.5 rounded ${GRADE_COLORS[grade.grade]}`}>{grade.grade}</span>}
-          </button>;
+          return (
+            <button 
+              key={t} 
+              onClick={() => setTerm(t)} 
+              className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 ${term === t ? "bg-white shadow-sm text-gray-900" : "text-gray-600 hover:text-gray-900"}`}
+            >
+              {TL[t]} 
+              {grade && grade.percentage > 0 && (
+                <span className={`text-xs px-2 py-0.5 rounded ${GRADE_COLORS[grade.grade]}`}>
+                  {grade.grade}
+                </span>
+              )}
+            </button>
+          );
         })}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-6">
         {ATYPES.map(type => {
           const a = getAsmt(type);
           if (!a) return null;
           const isEditing = editId === a.id;
           const p = pct(a.score, a.max);
-          return <div key={type} className="bg-card rounded-2xl border border-border p-4 group hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2 text-muted-foreground">{typeIcons[type]}<span className="text-xs font-bold uppercase tracking-wide">{AL[type]}</span></div>
-              <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full ${p >= 80 ? "bg-emerald-50 text-emerald-700" : p >= 60 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700"}`}>{gradeStr(a.score, a.max)}</span>
+          return (
+            <div key={type} className="bg-white rounded-2xl border border-gray-200 p-5 group hover:shadow-md transition-all">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2 text-gray-500">
+                  {typeIcons[type]}
+                  <span className="text-xs font-bold uppercase">{AL[type]}</span>
+                </div>
+                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${p >= 80 ? "bg-emerald-50 text-emerald-700" : p >= 60 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700"}`}>
+                  {gradeStr(a.score, a.max)}
+                </span>
+              </div>
+              {isEditing ? (
+                <div className="flex items-center gap-2 mb-3">
+                  <input
+                    type="number"
+                    min={0}
+                    max={a.max}
+                    value={editVal}
+                    onChange={(e) => setEditVal(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") commitEdit(a); if (e.key === "Escape") setEditId(null); }}
+                    className="w-20 border border-gray-200 rounded-lg px-3 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    autoFocus
+                  />
+                  <span className="text-sm text-gray-500">/ {a.max}</span>
+                  <button onClick={() => commitEdit(a)} className="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    <Check size={14} />
+                  </button>
+                  <button onClick={() => setEditId(null)} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
+                    <X size={14} />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-end gap-2 mb-3">
+                  <span className="text-3xl font-bold font-mono leading-none">{a.score}</span>
+                  <span className="text-sm text-gray-500 mb-0.5">/ {a.max}</span>
+                  <span className={`ml-auto text-sm font-mono px-2.5 py-0.5 rounded ${badgeCls(a.score, a.max)}`}>{p}%</span>
+                  <button
+                    onClick={() => { setEditId(a.id); setEditVal(String(a.score)); }}
+                    className="p-1 hover:bg-gray-100 rounded opacity-0 group-hover:opacity-100 transition-all"
+                  >
+                    <Pencil size={14} />
+                  </button>
+                </div>
+              )}
+              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div className={`h-full rounded-full transition-all duration-500 ${barCls(a.score, a.max)}`} style={{ width: `${p}%` }} />
+              </div>
             </div>
-            {isEditing ? (
-              <div className="flex items-center gap-2 mb-3">
-                <input type="number" min={0} max={a.max} value={editVal} onChange={e => setEditVal(e.target.value)} onKeyDown={e => { if (e.key === "Enter") commitEdit(a); if (e.key === "Escape") setEditId(null); }} className="w-20 border border-border rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/20" autoFocus />
-                <span className="text-xs text-muted-foreground">/ {a.max}</span>
-                <button onClick={() => commitEdit(a)} className="p-1.5 bg-primary text-primary-foreground rounded-lg hover:opacity-90"><Check size={12} /></button>
-                <button onClick={() => setEditId(null)} className="p-1.5 hover:bg-muted rounded-lg"><X size={12} /></button>
-              </div>
-            ) : (
-              <div className="flex items-end gap-2 mb-3">
-                <span className="text-2xl font-bold font-mono tabular-nums leading-none">{a.score}</span>
-                <span className="text-sm text-muted-foreground mb-0.5">/ {a.max}</span>
-                <span className={`ml-auto text-xs font-mono px-2 py-0.5 rounded ${badgeCls(a.score, a.max)}`}>{p}%</span>
-                <button onClick={() => { setEditId(a.id); setEditVal(String(a.score)); }} className="p-1 hover:bg-muted rounded opacity-0 group-hover:opacity-100 transition-all"><Pencil size={11} /></button>
-              </div>
-            )}
-            <div className="h-1.5 bg-muted rounded-full overflow-hidden"><div className={`h-full rounded-full transition-all duration-500 ${barCls(a.score, a.max)}`} style={{ width: `${p}%` }} /></div>
-          </div>;
+          );
         })}
       </div>
 
-      <div className="bg-card rounded-2xl border border-border p-4 sm:p-5 shadow-sm">
+      <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
-          <h3 className="text-sm font-bold">{TL[term]} Summary</h3>
-          {termAvg !== null && <span className={`text-sm font-bold font-mono tabular-nums px-3 py-1 rounded-full ${termAvg >= 80 ? "bg-emerald-50 text-emerald-700" : termAvg >= 60 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700"}`}>Term Avg: {termAvg}%</span>}
+          <h3 className="font-bold text-gray-900">{TL[term]} Summary</h3>
+          {termAvg !== null && (
+            <span className={`text-sm font-bold px-4 py-1.5 rounded-full ${termAvg >= 80 ? "bg-emerald-50 text-emerald-700" : termAvg >= 60 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700"}`}>
+              Term Average: {termAvg}%
+            </span>
+          )}
         </div>
-        <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3">
+        <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
           {ATYPES.map(type => {
             const a = getAsmt(type);
             if (!a) return null;
-            return <div key={type} className="text-center py-2 sm:py-3 bg-muted/30 rounded-xl">
-              <div className="text-sm font-bold font-mono">{gradeStr(a.score, a.max)}</div>
-              <div className="text-xs text-muted-foreground mt-0.5 hidden sm:block">{AL[type]}</div>
-              <div className="text-xs font-mono text-muted-foreground">{pct(a.score, a.max)}%</div>
-            </div>;
+            return (
+              <div key={type} className="text-center py-3 bg-gray-50 rounded-xl">
+                <div className="text-lg font-bold font-mono">{gradeStr(a.score, a.max)}</div>
+                <div className="text-xs text-gray-500 mt-0.5 hidden md:block">{AL[type]}</div>
+                <div className="text-sm font-mono text-gray-500">{pct(a.score, a.max)}%</div>
+              </div>
+            );
           })}
         </div>
       </div>
@@ -729,110 +854,262 @@ function DocsView({ docs, schools, klasses, onAdd, onUpdate, onDelete }: { docs:
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const filtered = docs.filter(d => (!fSchool || d.schoolId === fSchool) && (!fTerm || d.term === Number(fTerm)) && (!fType || d.type === fType));
+  const filtered = docs.filter(d => 
+    (!fSchool || d.schoolId === fSchool) && 
+    (!fTerm || d.term === Number(fTerm)) && 
+    (!fType || d.type === fType)
+  );
   const schoolName = (id: string) => schools.find(s => s.id === id)?.name ?? id;
   const klassName = (id: string | null) => id ? klasses.find(k => k.id === id)?.name : null;
 
-  const saveEdit = () => { if (selected) { onUpdate(selected.id, editContent); setSelected({ ...selected, content: editContent }); } setEditing(false); };
-  const typeBadge = (t: AType) => ({ test1: "bg-blue-50 text-blue-700", test2: "bg-blue-50 text-blue-700", test3: "bg-blue-50 text-blue-700", project: "bg-purple-50 text-purple-700", exam: "bg-primary/10 text-primary" }[t]);
+  const saveEdit = () => { 
+    if (selected) { 
+      onUpdate(selected.id, editContent); 
+      setSelected({ ...selected, content: editContent }); 
+    } 
+    setEditing(false); 
+  };
+  
+  const typeBadge = (t: AType) => {
+    const map = {
+      test1: "bg-blue-50 text-blue-700",
+      test2: "bg-blue-50 text-blue-700",
+      test3: "bg-blue-50 text-blue-700",
+      project: "bg-purple-50 text-purple-700",
+      exam: "bg-emerald-50 text-emerald-700"
+    };
+    return map[t];
+  };
 
   if (isMobile) {
     return (
       <div className="flex flex-col h-full">
-        <div className="p-4 border-b border-border bg-card flex-shrink-0">
-          <div className="flex items-center justify-between mb-3"><h2 className="font-bold text-base">Documents</h2><button onClick={onAdd} className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-lg text-xs font-semibold hover:opacity-90"><Plus size={13} /> New</button></div>
+        <div className="p-4 border-b border-gray-200 bg-white flex-shrink-0">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-bold text-lg text-gray-900">Documents</h2>
+            <button onClick={onAdd} className="flex items-center gap-1.5 bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors">
+              <Plus size={16} /> New
+            </button>
+          </div>
           <div className="space-y-2">
-            <select value={fSchool} onChange={e => setFSchool(e.target.value)} className="w-full border border-border rounded-lg px-2.5 py-1.5 text-xs bg-white focus:outline-none"><option value="">All Schools</option>{schools.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select>
+            <select value={fSchool} onChange={e => setFSchool(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="">All Schools</option>
+              {schools.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
             <div className="grid grid-cols-2 gap-2">
-              <select value={fTerm} onChange={e => setFTerm(e.target.value)} className="border border-border rounded-lg px-2.5 py-1.5 text-xs bg-white focus:outline-none"><option value="">All Terms</option><option value="1">First Term</option><option value="2">Second Term</option><option value="3">Third Term</option></select>
-              <select value={fType} onChange={e => setFType(e.target.value)} className="border border-border rounded-lg px-2.5 py-1.5 text-xs bg-white focus:outline-none"><option value="">All Types</option>{ATYPES.map(t => <option key={t} value={t}>{AL[t]}</option>)}</select>
+              <select value={fTerm} onChange={e => setFTerm(e.target.value)} className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">All Terms</option>
+                <option value="1">First Term</option>
+                <option value="2">Second Term</option>
+                <option value="3">Third Term</option>
+              </select>
+              <select value={fType} onChange={e => setFType(e.target.value)} className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">All Types</option>
+                {ATYPES.map(t => <option key={t} value={t}>{AL[t]}</option>)}
+              </select>
             </div>
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
-          {filtered.length === 0 ? <div className="text-center py-12 text-muted-foreground"><FileText size={32} className="mx-auto mb-2 opacity-20" /><p className="text-sm">No documents found</p></div> :
-            filtered.map(doc => <div key={doc.id} className="bg-card rounded-xl border border-border p-4 hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-semibold truncate">{doc.title}</h3>
-                  <p className="text-xs text-muted-foreground truncate">{schoolName(doc.schoolId)}</p>
-                  <div className="flex flex-wrap gap-1 mt-1.5">
-                    <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full">{TL[doc.term]}</span>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${typeBadge(doc.type)}`}>{AL[doc.type]}</span>
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
+          {filtered.length === 0 ? (
+            <div className="text-center py-16 text-gray-500">
+              <FileText size={40} className="mx-auto mb-3 text-gray-300" />
+              <p className="font-medium">No documents found</p>
+            </div>
+          ) : (
+            filtered.map(doc => (
+              <div key={doc.id} className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-all">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-gray-900 truncate">{doc.title}</h3>
+                    <p className="text-sm text-gray-500 truncate">{schoolName(doc.schoolId)}</p>
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{TL[doc.term]}</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${typeBadge(doc.type)}`}>{AL[doc.type]}</span>
+                    </div>
                   </div>
+                  <button onClick={() => { setSelected(doc); setEditing(false); }} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg ml-2">
+                    <ExternalLink size={18} />
+                  </button>
                 </div>
-                <button onClick={() => { setSelected(doc); setEditing(false); }} className="p-1.5 text-primary hover:bg-primary/10 rounded-lg ml-2"><ExternalLink size={14} /></button>
               </div>
-            </div>)
-          }
+            ))
+          )}
         </div>
-        {selected && <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-border flex-shrink-0">
-              <h3 className="font-bold text-sm truncate">{selected.title}</h3>
-              <button onClick={() => setSelected(null)} className="p-1.5 hover:bg-muted rounded-lg"><X size={16} /></button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-              {editing ? <textarea value={editContent} onChange={e => setEditContent(e.target.value)} className="w-full h-full min-h-[300px] font-mono text-sm border border-border rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none bg-white leading-relaxed" />
-                : <pre className="font-mono text-sm leading-relaxed whitespace-pre-wrap text-foreground bg-white rounded-xl p-4 min-h-[300px] border border-border shadow-sm">{selected.content}</pre>}
-            </div>
-            <div className="flex flex-wrap gap-2 px-4 sm:px-6 py-4 border-t border-border flex-shrink-0">
-              {editing ? <>
-                <button onClick={() => setEditing(false)} className="flex items-center gap-1.5 border border-border px-3 py-2 rounded-lg text-sm hover:bg-muted"><X size={14} /> Cancel</button>
-                <button onClick={saveEdit} className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-2 rounded-lg text-sm font-semibold hover:opacity-90"><Save size={14} /> Save</button>
-              </> : <>
-                <button onClick={() => { setEditing(true); setEditContent(selected.content); }} className="flex items-center gap-1.5 border border-border px-3 py-2 rounded-lg text-sm hover:bg-muted"><Pencil size={14} /> Edit</button>
-                <button onClick={() => dlDoc(selected)} className="flex items-center gap-1.5 border border-border px-3 py-2 rounded-lg text-sm hover:bg-muted"><Download size={14} /> Download</button>
-                <button onClick={() => { onDelete(selected.id); setSelected(null); }} className="flex items-center gap-1.5 border border-red-200 text-red-600 px-3 py-2 rounded-lg text-sm hover:bg-red-50"><Trash2 size={14} /> Delete</button>
-              </>}
+        {selected && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
+            <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col animate-in slide-in-from-bottom duration-300">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
+                <h3 className="font-bold text-lg text-gray-900 truncate">{selected.title}</h3>
+                <button onClick={() => setSelected(null)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-6">
+                {editing ? (
+                  <textarea
+                    value={editContent}
+                    onChange={(e) => setEditContent(e.target.value)}
+                    className="w-full h-full min-h-[300px] font-mono text-sm border border-gray-200 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white leading-relaxed"
+                  />
+                ) : (
+                  <pre className="font-mono text-sm leading-relaxed whitespace-pre-wrap text-gray-800 bg-gray-50 rounded-xl p-4 min-h-[300px] border border-gray-200">
+                    {selected.content}
+                  </pre>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2 px-6 py-4 border-t border-gray-100 flex-shrink-0">
+                {editing ? (
+                  <>
+                    <button onClick={() => setEditing(false)} className="flex items-center gap-1.5 border border-gray-200 px-4 py-2 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors">
+                      <X size={16} /> Cancel
+                    </button>
+                    <button onClick={saveEdit} className="flex items-center gap-1.5 bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors">
+                      <Save size={16} /> Save
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button onClick={() => { setEditing(true); setEditContent(selected.content); }} className="flex items-center gap-1.5 border border-gray-200 px-4 py-2 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors">
+                      <Pencil size={16} /> Edit
+                    </button>
+                    <button onClick={() => dlDoc(selected)} className="flex items-center gap-1.5 border border-gray-200 px-4 py-2 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors">
+                      <Download size={16} /> Download
+                    </button>
+                    <button onClick={() => { onDelete(selected.id); setSelected(null); }} className="flex items-center gap-1.5 border border-red-200 text-red-600 px-4 py-2 rounded-xl text-sm font-medium hover:bg-red-50 transition-colors">
+                      <Trash2 size={16} /> Delete
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
-        </div>}
+        )}
       </div>
     );
   }
 
   return (
-    <div className="flex w-full h-full overflow-hidden">
-      <div className="w-72 border-r border-border flex flex-col flex-shrink-0 bg-card">
-        <div className="p-4 border-b border-border">
-          <div className="flex items-center justify-between mb-3"><h2 className="font-bold text-sm">Documents</h2><button onClick={onAdd} className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-lg text-xs font-semibold hover:opacity-90"><Plus size={13} /> New</button></div>
+    <div className="flex w-full h-full bg-gray-50">
+      <div className="w-80 border-r border-gray-200 flex flex-col flex-shrink-0 bg-white">
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-bold text-lg text-gray-900">Documents</h2>
+            <button onClick={onAdd} className="flex items-center gap-1.5 bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm">
+              <Plus size={16} /> New
+            </button>
+          </div>
           <div className="space-y-2">
-            <select value={fSchool} onChange={e => setFSchool(e.target.value)} className="w-full border border-border rounded-lg px-2.5 py-1.5 text-xs bg-white focus:outline-none"><option value="">All Schools</option>{schools.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select>
+            <select value={fSchool} onChange={e => setFSchool(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="">All Schools</option>
+              {schools.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
             <div className="grid grid-cols-2 gap-2">
-              <select value={fTerm} onChange={e => setFTerm(e.target.value)} className="border border-border rounded-lg px-2.5 py-1.5 text-xs bg-white focus:outline-none"><option value="">All Terms</option><option value="1">First Term</option><option value="2">Second Term</option><option value="3">Third Term</option></select>
-              <select value={fType} onChange={e => setFType(e.target.value)} className="border border-border rounded-lg px-2.5 py-1.5 text-xs bg-white focus:outline-none"><option value="">All Types</option>{ATYPES.map(t => <option key={t} value={t}>{AL[t]}</option>)}</select>
+              <select value={fTerm} onChange={e => setFTerm(e.target.value)} className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">All Terms</option>
+                <option value="1">First Term</option>
+                <option value="2">Second Term</option>
+                <option value="3">Third Term</option>
+              </select>
+              <select value={fType} onChange={e => setFType(e.target.value)} className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">All Types</option>
+                {ATYPES.map(t => <option key={t} value={t}>{AL[t]}</option>)}
+              </select>
             </div>
           </div>
         </div>
         <div className="overflow-y-auto flex-1">
-          {filtered.length === 0 ? <div className="p-6 text-center text-muted-foreground"><FileText size={28} className="mx-auto mb-2 opacity-20" /><p className="text-xs">No documents found</p></div> :
-            <div className="divide-y divide-border">{filtered.map(doc => <button key={doc.id} onClick={() => { setSelected(doc); setEditing(false); }} className={`w-full text-left px-4 py-3.5 hover:bg-muted/30 transition-colors ${selected?.id === doc.id ? "bg-primary/5 border-r-2 border-primary" : ""}`}>
-              <div className="flex items-start gap-2.5"><FileText size={13} className="mt-0.5 flex-shrink-0 text-muted-foreground" /><div className="min-w-0"><p className="text-xs font-semibold leading-tight line-clamp-2">{doc.title}</p><p className="text-xs text-muted-foreground mt-0.5 truncate">{schoolName(doc.schoolId)}</p><div className="flex gap-1.5 mt-1.5 flex-wrap"><span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full font-medium">{TL[doc.term]}</span><span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${typeBadge(doc.type)}`}>{AL[doc.type]}</span></div></div></div>
-            </button>)}</div>}
+          {filtered.length === 0 ? (
+            <div className="p-6 text-center text-gray-500">
+              <FileText size={32} className="mx-auto mb-2 text-gray-300" />
+              <p className="text-sm">No documents found</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-100">
+              {filtered.map(doc => (
+                <button
+                  key={doc.id}
+                  onClick={() => { setSelected(doc); setEditing(false); }}
+                  className={`w-full text-left px-6 py-4 hover:bg-gray-50 transition-colors ${selected?.id === doc.id ? "bg-blue-50 border-r-2 border-blue-600" : ""}`}
+                >
+                  <div className="flex items-start gap-3">
+                    <FileText size={16} className="mt-0.5 flex-shrink-0 text-gray-400" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 line-clamp-2">{doc.title}</p>
+                      <p className="text-sm text-gray-500 mt-0.5 truncate">{schoolName(doc.schoolId)}</p>
+                      <div className="flex gap-1.5 mt-2 flex-wrap">
+                        <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium">{TL[doc.term]}</span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${typeBadge(doc.type)}`}>{AL[doc.type]}</span>
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col min-w-0 bg-background overflow-hidden">
-        {selected ? <>
-          <div className="px-6 py-4 border-b border-border bg-card flex items-start justify-between gap-4 flex-shrink-0 flex-wrap">
-            <div className="min-w-0"><h2 className="font-bold text-sm leading-tight">{selected.title}</h2><div className="flex items-center gap-3 mt-1 flex-wrap"><span className="text-xs text-muted-foreground">{schoolName(selected.schoolId)}</span>{klassName(selected.classId) && <span className="text-xs text-muted-foreground">{klassName(selected.classId)}</span>}<span className="text-xs text-muted-foreground">{TL[selected.term]}</span><span className={`text-xs px-2 py-0.5 rounded-full font-medium ${typeBadge(selected.type)}`}>{AL[selected.type]}</span><span className="text-xs text-muted-foreground font-mono">{selected.createdAt}</span></div></div>
-            <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
-              {editing ? <>
-                <button onClick={() => setEditing(false)} className="flex items-center gap-1.5 border border-border px-3 py-1.5 rounded-lg text-xs hover:bg-muted"><X size={12} /> Cancel</button>
-                <button onClick={saveEdit} className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-lg text-xs font-semibold hover:opacity-90"><Save size={12} /> Save</button>
-              </> : <>
-                <button onClick={() => { setEditing(true); setEditContent(selected.content); }} className="flex items-center gap-1.5 border border-border px-3 py-1.5 rounded-lg text-xs hover:bg-muted"><Pencil size={12} /> Edit</button>
-                <button onClick={() => dlDoc(selected)} className="flex items-center gap-1.5 border border-border px-3 py-1.5 rounded-lg text-xs hover:bg-muted"><Download size={12} /> Download</button>
-                <button onClick={() => { onDelete(selected.id); setSelected(null); }} className="flex items-center gap-1.5 border border-red-200 text-red-600 px-3 py-1.5 rounded-lg text-xs hover:bg-red-50"><Trash2 size={12} /> Delete</button>
-              </>}
+      <div className="flex-1 flex flex-col min-w-0 bg-white overflow-hidden">
+        {selected ? (
+          <>
+            <div className="px-6 py-4 border-b border-gray-200 bg-white flex items-start justify-between gap-4 flex-shrink-0 flex-wrap">
+              <div className="min-w-0">
+                <h2 className="font-bold text-lg text-gray-900 truncate">{selected.title}</h2>
+                <div className="flex items-center gap-3 mt-1 flex-wrap">
+                  <span className="text-sm text-gray-500">{schoolName(selected.schoolId)}</span>
+                  {klassName(selected.classId) && <span className="text-sm text-gray-500">{klassName(selected.classId)}</span>}
+                  <span className="text-sm text-gray-500">{TL[selected.term]}</span>
+                  <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${typeBadge(selected.type)}`}>{AL[selected.type]}</span>
+                  <span className="text-sm text-gray-400 font-mono">{selected.createdAt}</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
+                {editing ? (
+                  <>
+                    <button onClick={() => setEditing(false)} className="flex items-center gap-1.5 border border-gray-200 px-3 py-1.5 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors">
+                      <X size={14} /> Cancel
+                    </button>
+                    <button onClick={saveEdit} className="flex items-center gap-1.5 bg-blue-600 text-white px-3 py-1.5 rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors">
+                      <Save size={14} /> Save
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button onClick={() => { setEditing(true); setEditContent(selected.content); }} className="flex items-center gap-1.5 border border-gray-200 px-3 py-1.5 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors">
+                      <Pencil size={14} /> Edit
+                    </button>
+                    <button onClick={() => dlDoc(selected)} className="flex items-center gap-1.5 border border-gray-200 px-3 py-1.5 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors">
+                      <Download size={14} /> Download
+                    </button>
+                    <button onClick={() => { onDelete(selected.id); setSelected(null); }} className="flex items-center gap-1.5 border border-red-200 text-red-600 px-3 py-1.5 rounded-xl text-sm font-medium hover:bg-red-50 transition-colors">
+                      <Trash2 size={14} /> Delete
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
+            <div className="flex-1 p-6 overflow-y-auto bg-gray-50">
+              {editing ? (
+                <textarea
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  className="w-full h-full min-h-[500px] font-mono text-sm border border-gray-200 rounded-xl p-5 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white leading-relaxed resize-none"
+                />
+              ) : (
+                <pre className="font-mono text-sm leading-relaxed whitespace-pre-wrap text-gray-800 bg-white rounded-xl p-6 min-h-[500px] border border-gray-200 shadow-sm">
+                  {selected.content}
+                </pre>
+              )}
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center text-gray-500 flex-col gap-4">
+            <FileText size={56} className="text-gray-300" />
+            <p className="text-lg font-medium">Select a document to view or edit</p>
+            <p className="text-sm text-gray-400">Or create a new document</p>
           </div>
-          <div className="flex-1 p-6 overflow-y-auto">
-            {editing ? <textarea value={editContent} onChange={e => setEditContent(e.target.value)} className="w-full h-full min-h-[500px] font-mono text-sm border border-border rounded-xl p-5 focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none bg-white leading-relaxed" />
-              : <pre className="font-mono text-sm leading-relaxed whitespace-pre-wrap text-foreground bg-white rounded-xl p-6 min-h-[500px] border border-border shadow-sm">{selected.content}</pre>}
-          </div>
-        </> : <div className="flex-1 flex items-center justify-center text-muted-foreground flex-col gap-3"><FileText size={44} className="opacity-15" /><p className="text-sm font-medium">Select a document to view or edit</p><p className="text-xs opacity-60">Or create a new one</p></div>}
+        )}
       </div>
     </div>
   );
@@ -859,13 +1136,13 @@ export default function App() {
   const [showAddStudent, setShowAddStudent] = useState(false);
   const [showAddDoc, setShowAddDoc] = useState(false);
 
-  // ── Load Data from Database ──────────────────────────────────────────────
+  // ── Load Data ──────────────────────────────────────────────────────────────
   const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
     
     if (!isSupabaseAvailable()) {
-      setError('❌ Cannot connect to database. Please check your internet connection and Supabase credentials.');
+      setError('Cannot connect to database. Please check your connection.');
       setLoading(false);
       setIsOnline(false);
       return;
@@ -873,7 +1150,6 @@ export default function App() {
 
     try {
       setIsOnline(true);
-      console.log('📡 Loading data from Supabase database...');
       
       const [schoolsRes, classesRes, studentsRes, assessmentsRes, docsRes] = await Promise.all([
         supabase!.from('schools').select('*').order('name'),
@@ -895,10 +1171,10 @@ export default function App() {
       setAsmts(assessmentsRes.data || []);
       setDocs(docsRes.data || []);
       
-      console.log('✅ Data loaded successfully from database!');
+      console.log('✅ Data loaded successfully!');
     } catch (err: any) {
-      console.error('❌ Database error:', err);
-      setError(`Database error: ${err.message || 'Failed to load data'}`);
+      console.error('❌ Error loading data:', err);
+      setError(`Failed to load data: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -910,45 +1186,24 @@ export default function App() {
 
     if (!isSupabaseAvailable()) return;
 
-    // Subscribe to real-time changes
     const channels = [
       supabase!.channel('schools_changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'schools' }, () => {
-          console.log('🔄 Schools changed, reloading...');
-          loadData();
-        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'schools' }, loadData)
         .subscribe(),
-      
       supabase!.channel('classes_changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'classes' }, () => {
-          console.log('🔄 Classes changed, reloading...');
-          loadData();
-        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'classes' }, loadData)
         .subscribe(),
-      
       supabase!.channel('students_changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'students' }, () => {
-          console.log('🔄 Students changed, reloading...');
-          loadData();
-        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'students' }, loadData)
         .subscribe(),
-      
       supabase!.channel('assessments_changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'assessments' }, () => {
-          console.log('🔄 Assessments changed, reloading...');
-          loadData();
-        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'assessments' }, loadData)
         .subscribe(),
-      
       supabase!.channel('documents_changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'documents' }, () => {
-          console.log('🔄 Documents changed, reloading...');
-          loadData();
-        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'documents' }, loadData)
         .subscribe(),
     ];
 
-    // Check connection status periodically
     const interval = setInterval(() => {
       setIsOnline(isSupabaseAvailable());
     }, 30000);
@@ -959,19 +1214,16 @@ export default function App() {
     };
   }, [loadData]);
 
-  // ── CRUD Operations (All saved to Database) ──────────────────────────────
+  // ── CRUD Operations ──────────────────────────────────────────────────────
 
   const addSchool = async (newSchool: School) => {
     if (!isSupabaseAvailable()) {
       setError('Cannot save: Database not available');
       return;
     }
-    
     try {
       const { error } = await supabase!.from('schools').insert([newSchool]);
       if (error) throw error;
-      console.log('✅ School saved to database');
-      // Data will be reloaded via real-time subscription
     } catch (err: any) {
       console.error('Error adding school:', err);
       setError(`Failed to save school: ${err.message}`);
@@ -983,11 +1235,9 @@ export default function App() {
       setError('Cannot delete: Database not available');
       return;
     }
-    
     try {
       const { error } = await supabase!.from('schools').delete().eq('id', id);
       if (error) throw error;
-      console.log('✅ School deleted from database');
     } catch (err: any) {
       console.error('Error deleting school:', err);
       setError(`Failed to delete school: ${err.message}`);
@@ -999,11 +1249,9 @@ export default function App() {
       setError('Cannot save: Database not available');
       return;
     }
-    
     try {
       const { error } = await supabase!.from('classes').insert([newKlass]);
       if (error) throw error;
-      console.log('✅ Class saved to database');
     } catch (err: any) {
       console.error('Error adding class:', err);
       setError(`Failed to save class: ${err.message}`);
@@ -1015,11 +1263,9 @@ export default function App() {
       setError('Cannot delete: Database not available');
       return;
     }
-    
     try {
       const { error } = await supabase!.from('classes').delete().eq('id', id);
       if (error) throw error;
-      console.log('✅ Class deleted from database');
     } catch (err: any) {
       console.error('Error deleting class:', err);
       setError(`Failed to delete class: ${err.message}`);
@@ -1031,11 +1277,9 @@ export default function App() {
       setError('Cannot save: Database not available');
       return;
     }
-    
     try {
       const { error } = await supabase!.from('students').insert([newStudent]);
       if (error) throw error;
-      console.log('✅ Student saved to database');
 
       // Create assessments for the new student
       const year = klasses.find(k => k.id === newStudent.classId)?.academicYear || CURRENT_YEAR;
@@ -1046,7 +1290,6 @@ export default function App() {
       
       const { error: asmtError } = await supabase!.from('assessments').insert(newAsmts);
       if (asmtError) throw asmtError;
-      console.log('✅ Student assessments created in database');
     } catch (err: any) {
       console.error('Error adding student:', err);
       setError(`Failed to save student: ${err.message}`);
@@ -1058,11 +1301,9 @@ export default function App() {
       setError('Cannot delete: Database not available');
       return;
     }
-    
     try {
       const { error } = await supabase!.from('students').delete().eq('id', id);
       if (error) throw error;
-      console.log('✅ Student deleted from database');
     } catch (err: any) {
       console.error('Error deleting student:', err);
       setError(`Failed to delete student: ${err.message}`);
@@ -1074,11 +1315,9 @@ export default function App() {
       setError('Cannot update: Database not available');
       return;
     }
-    
     try {
       const { error } = await supabase!.from('students').update(updated).eq('id', updated.id);
       if (error) throw error;
-      console.log('✅ Student updated in database');
     } catch (err: any) {
       console.error('Error updating student:', err);
       setError(`Failed to update student: ${err.message}`);
@@ -1090,11 +1329,9 @@ export default function App() {
       setError('Cannot update: Database not available');
       return;
     }
-    
     try {
       const { error } = await supabase!.from('assessments').update({ score }).eq('id', id);
       if (error) throw error;
-      console.log('✅ Score updated in database');
     } catch (err: any) {
       console.error('Error updating score:', err);
       setError(`Failed to update score: ${err.message}`);
@@ -1106,11 +1343,9 @@ export default function App() {
       setError('Cannot save: Database not available');
       return;
     }
-    
     try {
       const { error } = await supabase!.from('documents').insert([newDoc]);
       if (error) throw error;
-      console.log('✅ Document saved to database');
     } catch (err: any) {
       console.error('Error adding document:', err);
       setError(`Failed to save document: ${err.message}`);
@@ -1122,11 +1357,9 @@ export default function App() {
       setError('Cannot update: Database not available');
       return;
     }
-    
     try {
       const { error } = await supabase!.from('documents').update({ content }).eq('id', id);
       if (error) throw error;
-      console.log('✅ Document updated in database');
     } catch (err: any) {
       console.error('Error updating document:', err);
       setError(`Failed to update document: ${err.message}`);
@@ -1138,11 +1371,9 @@ export default function App() {
       setError('Cannot delete: Database not available');
       return;
     }
-    
     try {
       const { error } = await supabase!.from('documents').delete().eq('id', id);
       if (error) throw error;
-      console.log('✅ Document deleted from database');
     } catch (err: any) {
       console.error('Error deleting document:', err);
       setError(`Failed to delete document: ${err.message}`);
@@ -1163,11 +1394,11 @@ export default function App() {
   // ── Loading State ──────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="flex h-screen bg-background items-center justify-center">
+      <div className="flex h-screen bg-gray-50 items-center justify-center">
         <div className="text-center">
-          <Loader2 size={48} className="animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading data from database...</p>
-          <p className="text-xs text-muted-foreground mt-2">Connecting to Supabase...</p>
+          <Loader2 size={48} className="animate-spin text-blue-600 mx-auto mb-4" />
+          <p className="text-gray-600 font-medium">Loading data...</p>
+          <p className="text-sm text-gray-400 mt-1">Connecting to database</p>
         </div>
       </div>
     );
@@ -1176,21 +1407,14 @@ export default function App() {
   // ── Error State ─────────────────────────────────────────────────────────────
   if (error && error.includes('Cannot connect')) {
     return (
-      <div className="flex h-screen bg-background items-center justify-center">
-        <div className="text-center max-w-md p-6">
-          <WifiOff size={48} className="text-red-600 mx-auto mb-4" />
-          <h2 className="text-xl font-bold mb-2">Database Connection Error</h2>
-          <p className="text-muted-foreground mb-4">{error}</p>
-          <div className="space-y-2">
-            <button onClick={loadData} className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg mx-auto">
-              <RefreshCw size={16} /> Retry Connection
-            </button>
-            <p className="text-xs text-muted-foreground mt-2">
-              Make sure your .env file has:<br/>
-              VITE_SUPABASE_URL=your-project-url<br/>
-              VITE_SUPABASE_ANON_KEY=your-anon-key
-            </p>
-          </div>
+      <div className="flex h-screen bg-gray-50 items-center justify-center">
+        <div className="text-center max-w-md p-8 bg-white rounded-2xl shadow-lg">
+          <WifiOff size={56} className="text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Connection Error</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <button onClick={loadData} className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-blue-700 transition-colors mx-auto">
+            <RefreshCw size={18} /> Retry
+          </button>
         </div>
       </div>
     );
@@ -1198,13 +1422,13 @@ export default function App() {
 
   if (error) {
     return (
-      <div className="flex h-screen bg-background items-center justify-center">
-        <div className="text-center max-w-md p-6">
-          <AlertCircle size={48} className="text-red-600 mx-auto mb-4" />
-          <h2 className="text-xl font-bold mb-2">Error</h2>
-          <p className="text-muted-foreground mb-4">{error}</p>
-          <button onClick={loadData} className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg mx-auto">
-            <RefreshCw size={16} /> Retry
+      <div className="flex h-screen bg-gray-50 items-center justify-center">
+        <div className="text-center max-w-md p-8 bg-white rounded-2xl shadow-lg">
+          <AlertCircle size={56} className="text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Error</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <button onClick={loadData} className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-blue-700 transition-colors mx-auto">
+            <RefreshCw size={18} /> Retry
           </button>
         </div>
       </div>
@@ -1213,9 +1437,9 @@ export default function App() {
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
       {/* Connection Status Bar */}
-      <div className={`fixed top-0 left-0 right-0 z-50 px-4 py-1 text-xs text-center font-medium ${isOnline ? 'bg-emerald-50 text-emerald-700 border-b border-emerald-200' : 'bg-amber-50 text-amber-700 border-b border-amber-200'}`}>
+      <div className={`fixed top-0 left-0 right-0 z-50 px-4 py-1.5 text-xs text-center font-medium ${isOnline ? 'bg-emerald-50 text-emerald-700 border-b border-emerald-200' : 'bg-amber-50 text-amber-700 border-b border-amber-200'}`}>
         {isOnline ? (
           <span className="flex items-center justify-center gap-2">
             <Wifi size={12} /> Connected to Database | Real-time updates active
@@ -1228,55 +1452,53 @@ export default function App() {
       </div>
 
       {/* Sidebar */}
-      <aside className="w-56 bg-primary flex flex-col flex-shrink-0 shadow-xl hidden md:flex mt-6">
-        <div className="px-5 py-5 border-b border-white/10">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-white/15 rounded-xl flex items-center justify-center">
-              <GraduationCap size={17} className="text-white" />
+      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col flex-shrink-0 shadow-sm hidden md:flex mt-8">
+        <div className="px-6 py-5 border-b border-gray-200">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-sm">
+              <GraduationCap size={20} className="text-white" />
             </div>
             <div>
-              <span className="text-white font-bold text-sm tracking-wide">SchoolTrack</span>
-              <div className="text-white/40 text-[10px] font-mono">Academic Manager</div>
+              <span className="text-gray-900 font-bold text-lg tracking-tight">SchoolTrack</span>
+              <div className="text-gray-400 text-xs font-medium">Academic Manager</div>
             </div>
           </div>
         </div>
 
-        <nav className="flex-1 p-3 space-y-1 pt-4 overflow-y-auto">
-          <p className="text-white/30 text-[10px] font-bold uppercase tracking-widest px-3 mb-2">Navigation</p>
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+          <p className="text-gray-400 text-xs font-bold uppercase tracking-wider px-3 mb-3">Navigation</p>
           <button
             onClick={goSchools}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${view !== "docs" ? "bg-white/15 text-white" : "text-white/55 hover:text-white hover:bg-white/10"}`}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${view !== "docs" ? "bg-blue-50 text-blue-700" : "text-gray-600 hover:bg-gray-50"}`}
           >
-            <Building2 size={15} /> Schools
+            <Building2 size={18} />
+            Schools
           </button>
           <button
             onClick={goDocs}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${view === "docs" ? "bg-white/15 text-white" : "text-white/55 hover:text-white hover:bg-white/10"}`}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${view === "docs" ? "bg-blue-50 text-blue-700" : "text-gray-600 hover:bg-gray-50"}`}
           >
-            <FileText size={15} /> Documents
+            <FileText size={18} />
+            Documents
           </button>
         </nav>
 
-        <div className="p-4 border-t border-white/10 space-y-2">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-white/40">Schools</span>
-            <span className="text-white/70 font-mono font-bold">{schools.length}</span>
+        <div className="p-4 border-t border-gray-200 space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-500">Schools</span>
+            <span className="font-bold text-gray-900">{schools.length}</span>
           </div>
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-white/40">Classes</span>
-            <span className="text-white/70 font-mono font-bold">{klasses.length}</span>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-500">Classes</span>
+            <span className="font-bold text-gray-900">{klasses.length}</span>
           </div>
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-white/40">Students</span>
-            <span className="text-white/70 font-mono font-bold">{students.length}</span>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-500">Students</span>
+            <span className="font-bold text-gray-900">{students.length}</span>
           </div>
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-white/40">Documents</span>
-            <span className="text-white/70 font-mono font-bold">{docs.length}</span>
-          </div>
-          <div className="flex items-center justify-between text-xs pt-1 border-t border-white/10">
-            <span className="text-white/40">Status</span>
-            <span className={`text-xs font-mono ${isOnline ? 'text-emerald-400' : 'text-amber-400'}`}>
+          <div className="flex items-center justify-between text-sm pt-2 border-t border-gray-100">
+            <span className="text-gray-500">Status</span>
+            <span className={`text-xs font-medium ${isOnline ? 'text-emerald-600' : 'text-amber-600'}`}>
               {isOnline ? '🟢 Online' : '🟡 Offline'}
             </span>
           </div>
@@ -1284,25 +1506,25 @@ export default function App() {
       </aside>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-border z-50 flex justify-around py-2">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 flex justify-around py-3">
         <button
           onClick={goSchools}
-          className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg text-xs ${view !== "docs" ? "text-primary" : "text-muted-foreground"}`}
+          className={`flex flex-col items-center gap-1 px-4 py-1 rounded-lg text-xs font-medium ${view !== "docs" ? "text-blue-600" : "text-gray-500"}`}
         >
-          <Building2 size={20} />
+          <Building2 size={22} />
           <span>Schools</span>
         </button>
         <button
           onClick={goDocs}
-          className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg text-xs ${view === "docs" ? "text-primary" : "text-muted-foreground"}`}
+          className={`flex flex-col items-center gap-1 px-4 py-1 rounded-lg text-xs font-medium ${view === "docs" ? "text-blue-600" : "text-gray-500"}`}
         >
-          <FileText size={20} />
+          <FileText size={22} />
           <span>Docs</span>
         </button>
       </nav>
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col overflow-hidden min-w-0 pb-16 md:pb-0 mt-6">
+      <main className="flex-1 flex flex-col overflow-hidden min-w-0 pb-16 md:pb-0 mt-8">
         {view === "docs" ? (
           <DocsView
             docs={docs}
