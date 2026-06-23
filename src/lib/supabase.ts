@@ -1,34 +1,51 @@
-// src/lib/supabase.ts
+
 import { createClient } from '@supabase/supabase-js';
 
-// Get environment variables with VITE_ prefix
+// Get environment variables
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // Debug logging
-console.log('🔍 Supabase Configuration:');
-console.log('📌 URL:', supabaseUrl ? '✅ Loaded' : '❌ Missing');
-console.log('📌 Key:', supabaseAnonKey ? '✅ Loaded' : '❌ Missing');
+console.log('🔍 Environment Variables Check:');
+console.log('📌 VITE_SUPABASE_URL:', supabaseUrl ? '✅ Loaded' : '❌ Missing');
+console.log('📌 VITE_SUPABASE_ANON_KEY:', supabaseAnonKey ? '✅ Loaded' : '❌ Missing');
 
 // Validate credentials
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error(`
-  ⚠️ Supabase credentials are missing!
-  
-  Please create a .env file in your project root with:
-  
-  VITE_SUPABASE_URL=https://yiymjiefemecrlumimhq.supabase.co
-  VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpeW1qaWVmZW1lY3JsdW1pbWhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyMzY2MTIsImV4cCI6MjA5NzgxMjYxMn0.fDFSrB_XkpVsfy7vXH0vQunUksy7-SDPypzMaj846ko
-  
-  You can find these in your Supabase project:
-  Settings → API → Project URL & anon public key
-  `);
+if (!supabaseUrl) {
+  console.error('❌ VITE_SUPABASE_URL is missing!');
+  console.error('Please add to .env: VITE_SUPABASE_URL=https://yiymjiefemecrlumimhq.supabase.co');
 }
 
-// Create Supabase client
-export const supabase = supabaseUrl && supabaseAnonKey 
-  ? createClient(supabaseUrl, supabaseAnonKey)
-  : null;
+if (!supabaseAnonKey) {
+  console.error('❌ VITE_SUPABASE_ANON_KEY is missing!');
+  console.error('Please add to .env: VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...');
+}
 
-// Helper function to check if Supabase is available
+// Only create client if both credentials exist
+let supabaseInstance = null;
+
+if (supabaseUrl && supabaseAnonKey) {
+  try {
+    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey);
+    console.log('✅ Supabase client initialized successfully!');
+  } catch (error) {
+    console.error('❌ Failed to initialize Supabase client:', error);
+    supabaseInstance = null;
+  }
+} else {
+  console.warn('⚠️ Supabase client not initialized - missing credentials');
+}
+
+export const supabase = supabaseInstance;
 export const isSupabaseAvailable = () => supabase !== null;
+
+// Helper function to check if we're connected
+export const checkSupabaseConnection = async () => {
+  if (!supabase) return false;
+  try {
+    const { data, error } = await supabase.from('schools').select('count', { count: 'exact', head: true });
+    return !error;
+  } catch {
+    return false;
+  }
+};
