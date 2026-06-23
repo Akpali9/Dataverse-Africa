@@ -5,12 +5,7 @@ import {
   ExternalLink, Save, Pencil, Check, BarChart2, ClipboardList,
   Edit2, Camera, Loader2, RefreshCw, Search, AlertCircle,
 } from "lucide-react";
-import { createClient } from '@supabase/supabase-js';
-
-// ── Supabase Client ──────────────────────────────────────────────────────────
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+import { supabase, isSupabaseAvailable } from './lib/supabase';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type View = "schools" | "classes" | "students" | "student" | "docs";
@@ -865,13 +860,21 @@ export default function App() {
   const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
+    
+    // Check if Supabase is available
+    if (!isSupabaseAvailable()) {
+      setError('Supabase is not configured. Please check your environment variables.');
+      setLoading(false);
+      return;
+    }
+    
     try {
       const [schoolsRes, classesRes, studentsRes, assessmentsRes, docsRes] = await Promise.all([
-        supabase.from('schools').select('*').order('name'),
-        supabase.from('classes').select('*').order('name'),
-        supabase.from('students').select('*').order('last_name'),
-        supabase.from('assessments').select('*'),
-        supabase.from('documents').select('*').order('created_at', { ascending: false }),
+        supabase!.from('schools').select('*').order('name'),
+        supabase!.from('classes').select('*').order('name'),
+        supabase!.from('students').select('*').order('last_name'),
+        supabase!.from('assessments').select('*'),
+        supabase!.from('documents').select('*').order('created_at', { ascending: false }),
       ]);
 
       if (schoolsRes.error) throw schoolsRes.error;
@@ -897,12 +900,14 @@ export default function App() {
   useEffect(() => {
     loadData();
 
+    if (!isSupabaseAvailable()) return;
+
     const channels = [
-      supabase.channel('schools_changes').on('postgres_changes', { event: '*', schema: 'public', table: 'schools' }, loadData).subscribe(),
-      supabase.channel('classes_changes').on('postgres_changes', { event: '*', schema: 'public', table: 'classes' }, loadData).subscribe(),
-      supabase.channel('students_changes').on('postgres_changes', { event: '*', schema: 'public', table: 'students' }, loadData).subscribe(),
-      supabase.channel('assessments_changes').on('postgres_changes', { event: '*', schema: 'public', table: 'assessments' }, loadData).subscribe(),
-      supabase.channel('documents_changes').on('postgres_changes', { event: '*', schema: 'public', table: 'documents' }, loadData).subscribe(),
+      supabase!.channel('schools_changes').on('postgres_changes', { event: '*', schema: 'public', table: 'schools' }, loadData).subscribe(),
+      supabase!.channel('classes_changes').on('postgres_changes', { event: '*', schema: 'public', table: 'classes' }, loadData).subscribe(),
+      supabase!.channel('students_changes').on('postgres_changes', { event: '*', schema: 'public', table: 'students' }, loadData).subscribe(),
+      supabase!.channel('assessments_changes').on('postgres_changes', { event: '*', schema: 'public', table: 'assessments' }, loadData).subscribe(),
+      supabase!.channel('documents_changes').on('postgres_changes', { event: '*', schema: 'public', table: 'documents' }, loadData).subscribe(),
     ];
 
     return () => channels.forEach(ch => ch.unsubscribe());
@@ -911,31 +916,39 @@ export default function App() {
   // ── CRUD Operations ──────────────────────────────────────────────────────
 
   const addSchool = async (newSchool: School) => {
-    const { error } = await supabase.from('schools').insert([newSchool]);
+    if (!isSupabaseAvailable()) {
+      setError('Supabase is not available');
+      return;
+    }
+    const { error } = await supabase!.from('schools').insert([newSchool]);
     if (error) { console.error('Error adding school:', error); return; }
     setSchools(prev => [...prev, newSchool]);
   };
 
   const delSchool = async (id: string) => {
-    const { error } = await supabase.from('schools').delete().eq('id', id);
+    if (!isSupabaseAvailable()) return;
+    const { error } = await supabase!.from('schools').delete().eq('id', id);
     if (error) { console.error('Error deleting school:', error); return; }
     setSchools(prev => prev.filter(s => s.id !== id));
   };
 
   const addKlass = async (newKlass: Klass) => {
-    const { error } = await supabase.from('classes').insert([newKlass]);
+    if (!isSupabaseAvailable()) return;
+    const { error } = await supabase!.from('classes').insert([newKlass]);
     if (error) { console.error('Error adding class:', error); return; }
     setKlasses(prev => [...prev, newKlass]);
   };
 
   const delKlass = async (id: string) => {
-    const { error } = await supabase.from('classes').delete().eq('id', id);
+    if (!isSupabaseAvailable()) return;
+    const { error } = await supabase!.from('classes').delete().eq('id', id);
     if (error) { console.error('Error deleting class:', error); return; }
     setKlasses(prev => prev.filter(k => k.id !== id));
   };
 
   const addStudent = async (newStudent: Student) => {
-    const { error } = await supabase.from('students').insert([newStudent]);
+    if (!isSupabaseAvailable()) return;
+    const { error } = await supabase!.from('students').insert([newStudent]);
     if (error) { console.error('Error adding student:', error); return; }
     setStudents(prev => [...prev, newStudent]);
 
@@ -945,44 +958,50 @@ export default function App() {
       for (const type of ATYPES)
         newAsmts.push({ id: uid(), studentId: newStudent.id, term, type, score: 0, max: AMAX[type], year });
     
-    const { error: asmtError } = await supabase.from('assessments').insert(newAsmts);
+    const { error: asmtError } = await supabase!.from('assessments').insert(newAsmts);
     if (asmtError) { console.error('Error adding assessments:', asmtError); return; }
     setAsmts(prev => [...prev, ...newAsmts]);
   };
 
   const delStudent = async (id: string) => {
-    const { error } = await supabase.from('students').delete().eq('id', id);
+    if (!isSupabaseAvailable()) return;
+    const { error } = await supabase!.from('students').delete().eq('id', id);
     if (error) { console.error('Error deleting student:', error); return; }
     setStudents(prev => prev.filter(s => s.id !== id));
     setAsmts(prev => prev.filter(a => a.studentId !== id));
   };
 
   const updateStudent = async (updated: Student) => {
-    const { error } = await supabase.from('students').update(updated).eq('id', updated.id);
+    if (!isSupabaseAvailable()) return;
+    const { error } = await supabase!.from('students').update(updated).eq('id', updated.id);
     if (error) { console.error('Error updating student:', error); return; }
     setStudents(prev => prev.map(s => s.id === updated.id ? updated : s));
   };
 
   const updateScore = async (id: string, score: number) => {
-    const { error } = await supabase.from('assessments').update({ score }).eq('id', id);
+    if (!isSupabaseAvailable()) return;
+    const { error } = await supabase!.from('assessments').update({ score }).eq('id', id);
     if (error) { console.error('Error updating score:', error); return; }
     setAsmts(prev => prev.map(a => a.id === id ? { ...a, score } : a));
   };
 
   const addDoc = async (newDoc: Doc) => {
-    const { error } = await supabase.from('documents').insert([newDoc]);
+    if (!isSupabaseAvailable()) return;
+    const { error } = await supabase!.from('documents').insert([newDoc]);
     if (error) { console.error('Error adding document:', error); return; }
     setDocs(prev => [...prev, newDoc]);
   };
 
   const updateDoc = async (id: string, content: string) => {
-    const { error } = await supabase.from('documents').update({ content }).eq('id', id);
+    if (!isSupabaseAvailable()) return;
+    const { error } = await supabase!.from('documents').update({ content }).eq('id', id);
     if (error) { console.error('Error updating document:', error); return; }
     setDocs(prev => prev.map(d => d.id === id ? { ...d, content } : d));
   };
 
   const delDoc = async (id: string) => {
-    const { error } = await supabase.from('documents').delete().eq('id', id);
+    if (!isSupabaseAvailable()) return;
+    const { error } = await supabase!.from('documents').delete().eq('id', id);
     if (error) { console.error('Error deleting document:', error); return; }
     setDocs(prev => prev.filter(d => d.id !== id));
   };
