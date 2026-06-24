@@ -30,7 +30,7 @@ interface Student {
   guardian_name?: string; guardian_phone?: string; created_at?: string;
 }
 interface Asmt {
-  id: string; student_id: string; term: Term; type: AType; score: number; max: number;
+  id: string; student_id: string; term: Term; type: AType; score: number; max_score: number;
   year: string; created_at?: string;
 }
 interface Doc {
@@ -69,7 +69,7 @@ const gradeStr = (s: number, m: number): Grade => {
   return p >= 90 ? "A+" : p >= 80 ? "A" : p >= 70 ? "B" : p >= 60 ? "C" : p >= 50 ? "D" : "F";
 };
 const avgPct = (asmts: Asmt[]) =>
-  asmts.length ? Math.round(asmts.reduce((sum, a) => sum + pct(a.score, a.max), 0) / asmts.length) : null;
+  asmts.length ? Math.round(asmts.reduce((sum, a) => sum + pct(a.score, a.max_score), 0) / asmts.length) : null;
 
 const badgeCls = (s: number, m: number) => {
   const p = pct(s, m);
@@ -745,7 +745,7 @@ function StudentDetailView({
 
   const commitEdit = async (a: any) => {
     const v = parseFloat(editVal);
-    if (!isNaN(v) && v >= 0 && v <= a.max) {
+    if (!isNaN(v) && v >= 0 && v <= a.max_score) {
       setSaving(true);
       await onUpdateScore(a.id, Math.round(v));
       setSaving(false);
@@ -843,7 +843,7 @@ function StudentDetailView({
           const a = getAsmt(type);
           if (!a) return null;
           const isEditing = editId === a.id;
-          const p = pct(a.score, a.max);
+          const p = pct(a.score, a.max_score);
           return (
             <div key={type} className="bg-white rounded-2xl border border-gray-200 p-5 group hover:shadow-md transition-all">
               <div className="flex items-center justify-between mb-4">
@@ -852,7 +852,7 @@ function StudentDetailView({
                   <span className="text-xs font-bold uppercase">{AL[type]}</span>
                 </div>
                 <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${p >= 80 ? "bg-emerald-50 text-emerald-700" : p >= 60 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700"}`}>
-                  {gradeStr(a.score, a.max)}
+                  {gradeStr(a.score, a.max_score)}
                 </span>
               </div>
               {isEditing ? (
@@ -860,14 +860,14 @@ function StudentDetailView({
                   <input
                     type="number"
                     min={0}
-                    max={a.max}
+                    max={a.max_score}
                     value={editVal}
                     onChange={(e) => setEditVal(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter") commitEdit(a); if (e.key === "Escape") setEditId(null); }}
                     className="w-20 border border-gray-200 rounded-lg px-3 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
                     autoFocus
                   />
-                  <span className="text-sm text-gray-500">/ {a.max}</span>
+                  <span className="text-sm text-gray-500">/ {a.max_score}</span>
                   <button onClick={() => commitEdit(a)} disabled={saving} className="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50">
                     {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
                   </button>
@@ -878,8 +878,8 @@ function StudentDetailView({
               ) : (
                 <div className="flex items-end gap-2 mb-3">
                   <span className="text-3xl font-bold font-mono leading-none">{a.score}</span>
-                  <span className="text-sm text-gray-500 mb-0.5">/ {a.max}</span>
-                  <span className={`ml-auto text-sm font-mono px-2.5 py-0.5 rounded ${badgeCls(a.score, a.max)}`}>{p}%</span>
+                  <span className="text-sm text-gray-500 mb-0.5">/ {a.max_score}</span>
+                  <span className={`ml-auto text-sm font-mono px-2.5 py-0.5 rounded ${badgeCls(a.score, a.max_score)}`}>{p}%</span>
                   <button
                     onClick={() => { setEditId(a.id); setEditVal(String(a.score)); }}
                     className="p-1 hover:bg-gray-100 rounded opacity-0 group-hover:opacity-100 transition-all"
@@ -889,7 +889,7 @@ function StudentDetailView({
                 </div>
               )}
               <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div className={`h-full rounded-full transition-all duration-500 ${barCls(a.score, a.max)}`} style={{ width: `${p}%` }} />
+                <div className={`h-full rounded-full transition-all duration-500 ${barCls(a.score, a.max_score)}`} style={{ width: `${p}%` }} />
               </div>
             </div>
           );
@@ -911,9 +911,9 @@ function StudentDetailView({
             if (!a) return null;
             return (
               <div key={type} className="text-center py-3 bg-gray-50 rounded-xl">
-                <div className="text-lg font-bold font-mono">{gradeStr(a.score, a.max)}</div>
+                <div className="text-lg font-bold font-mono">{gradeStr(a.score, a.max_score)}</div>
                 <div className="text-xs text-gray-500 mt-0.5 hidden md:block">{AL[type]}</div>
-                <div className="text-sm font-mono text-gray-500">{pct(a.score, a.max)}%</div>
+                <div className="text-sm font-mono text-gray-500">{pct(a.score, a.max_score)}%</div>
               </div>
             );
           })}
@@ -1777,7 +1777,7 @@ export default function App() {
     };
   }, [loadData]);
 
-  // ── CRUD Operations (All connected to Supabase) ──────────────────────────
+  // ── CRUD Operations ──────────────────────────────────────────────────────
 
   const addSchool = async (newSchool: any) => {
     if (!isSupabaseAvailable()) {
@@ -1882,7 +1882,7 @@ export default function App() {
       const newAsmts: any[] = [];
       for (const term of [1, 2, 3] as Term[])
         for (const type of ATYPES)
-          newAsmts.push({ id: uid(), student_id: newStudent.id, term, type, score: 0, max: AMAX[type], year });
+          newAsmts.push({ id: uid(), student_id: newStudent.id, term, type, score: 0, max_score: AMAX[type], year });
       
       const { error: asmtError } = await supabase!.from('assessments').insert(newAsmts);
       if (asmtError) throw asmtError;
@@ -1932,7 +1932,6 @@ export default function App() {
       const { error } = await supabase!.from('assessments').update({ score }).eq('id', id);
       if (error) throw error;
       console.log('✅ Score updated successfully:', id, score);
-      // Don't reload here - let real-time subscription handle it
     } catch (err: any) {
       console.error('Error updating score:', err);
       setError(`Failed to update score: ${err.message}`);
@@ -2020,7 +2019,6 @@ export default function App() {
           <WifiOff size={56} className="text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-bold mb-2">Connection Error</h2>
           <p className="text-muted-foreground mb-6">{error}</p>
-          <p className="text-sm text-muted-foreground mb-4">Make sure your Supabase credentials are correct in .env</p>
           <button onClick={handleManualRefresh} className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 rounded-xl font-semibold hover:opacity-90 mx-auto">
             <RefreshCw size={18} /> Retry
           </button>
@@ -2117,10 +2115,6 @@ export default function App() {
           <div className="flex items-center justify-between text-xs">
             <span className="text-white/40">Documents</span>
             <span className="text-white/70 font-mono font-bold">{docs.length}</span>
-          </div>
-          <div className="flex items-center justify-between text-xs pt-1 border-t border-white/10">
-            <span className="text-white/40">Status</span>
-            <span className="text-white/70 font-mono text-[10px]">Supabase</span>
           </div>
         </div>
       </aside>
