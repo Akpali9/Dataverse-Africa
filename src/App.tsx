@@ -458,6 +458,7 @@ function ScoreInputModal({
   const [selectedTerm, setSelectedTerm] = useState<Term>(1);
   const [selectedType, setSelectedType] = useState<AType>("test1");
   const [scores, setScores] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const existingScores: Record<string, string> = {};
@@ -481,25 +482,34 @@ function ScoreInputModal({
     setScores(prev => ({ ...prev, [studentId]: value }));
   };
 
-  const handleSaveAll = () => {
-    students.forEach((student: any) => {
-      const scoreValue = scores[student.id];
-      if (scoreValue !== undefined && scoreValue !== "") {
-        const score = parseFloat(scoreValue);
-        if (!isNaN(score) && score >= 0) {
-          const existing = asmts.find((a: any) => 
-            a.student_id === student.id && 
-            a.term === selectedTerm && 
-            a.type === selectedType &&
-            a.year === klass.academic_year
-          );
-          if (existing) {
-            onSave(existing.id, Math.round(score));
+  const handleSaveAll = async () => {
+    setSaving(true);
+    try {
+      const savePromises = students.map((student: any) => {
+        const scoreValue = scores[student.id];
+        if (scoreValue !== undefined && scoreValue !== "") {
+          const score = parseFloat(scoreValue);
+          if (!isNaN(score) && score >= 0) {
+            const existing = asmts.find((a: any) => 
+              a.student_id === student.id && 
+              a.term === selectedTerm && 
+              a.type === selectedType &&
+              a.year === klass.academic_year
+            );
+            if (existing) {
+              return onSave(existing.id, Math.round(score));
+            }
           }
         }
-      }
-    });
-    onClose();
+        return Promise.resolve();
+      });
+      await Promise.all(savePromises);
+      onClose();
+    } catch (error) {
+      console.error('Error saving scores:', error);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const maxScore = AMAX[selectedType];
@@ -613,9 +623,11 @@ function ScoreInputModal({
           </button>
           <button 
             onClick={handleSaveAll}
-            className="flex-1 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+            disabled={saving}
+            className="flex-1 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-50"
           >
-            <SaveIcon size={16} /> Save All Scores
+            {saving ? <Loader2 size={16} className="animate-spin" /> : <SaveIcon size={16} />}
+            {saving ? 'Saving...' : 'Save All Scores'}
           </button>
         </div>
       </div>
@@ -1385,6 +1397,7 @@ function ScoreManagementView({
   const [selectedTerm, setSelectedTerm] = useState<Term>(1);
   const [selectedType, setSelectedType] = useState<AType>("test1");
   const [editingScores, setEditingScores] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState<Record<string, boolean>>({});
 
   const maxScore = AMAX[selectedType];
 
@@ -1406,28 +1419,51 @@ function ScoreManagementView({
     setEditingScores(prev => ({ ...prev, [studentId]: value }));
   };
 
-  const handleSaveScore = (studentId: string) => {
+  const handleSaveScore = async (studentId: string) => {
     const value = editingScores[studentId];
     if (value && value !== "") {
       const score = parseFloat(value);
       if (!isNaN(score) && score >= 0 && score <= maxScore) {
-        const assessment = asmts.find((a: any) => 
-          a.student_id === studentId && 
-          a.term === selectedTerm && 
-          a.type === selectedType &&
-          a.year === klass.academic_year
-        );
-        if (assessment) {
-          onUpdateScore(assessment.id, Math.round(score));
+        setSaving(prev => ({ ...prev, [studentId]: true }));
+        try {
+          const assessment = asmts.find((a: any) => 
+            a.student_id === studentId && 
+            a.term === selectedTerm && 
+            a.type === selectedType &&
+            a.year === klass.academic_year
+          );
+          if (assessment) {
+            await onUpdateScore(assessment.id, Math.round(score));
+          }
+        } catch (error) {
+          console.error('Error saving score:', error);
+        } finally {
+          setSaving(prev => ({ ...prev, [studentId]: false }));
         }
       }
     }
   };
 
-  const handleSaveAll = () => {
-    students.forEach((student: any) => {
-      handleSaveScore(student.id);
+  const handleSaveAll = async () => {
+    const savePromises = students.map((student: any) => {
+      const value = editingScores[student.id];
+      if (value && value !== "") {
+        const score = parseFloat(value);
+        if (!isNaN(score) && score >= 0 && score <= maxScore) {
+          const assessment = asmts.find((a: any) => 
+            a.student_id === student.id && 
+            a.term === selectedTerm && 
+            a.type === selectedType &&
+            a.year === klass.academic_year
+          );
+          if (assessment) {
+            return onUpdateScore(assessment.id, Math.round(score));
+          }
+        }
+      }
+      return Promise.resolve();
     });
+    await Promise.all(savePromises);
   };
 
   const getStudentScore = (studentId: string) => {
@@ -1516,6 +1552,7 @@ function ScoreManagementView({
                 const grade = isValid ? gradeStr(scoreVal, maxScore) : "N/A";
                 const percentage = isValid ? pct(scoreVal, maxScore) : 0;
                 const currentScore = editingScores[student.id] || "";
+                const isSaving = saving[student.id] || false;
 
                 return (
                   <tr key={student.id} className="hover:bg-muted/20 transition-colors">
@@ -1557,10 +1594,11 @@ function ScoreManagementView({
                     <td className="px-4 sm:px-6 py-4">
                       <button
                         onClick={() => handleSaveScore(student.id)}
-                        disabled={!currentScore || currentScore === ""}
-                        className="px-3 py-1.5 text-xs font-semibold bg-primary/10 text-primary rounded-lg hover:bg-primary hover:text-primary-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={!currentScore || currentScore === "" || isSaving}
+                        className="px-3 py-1.5 text-xs font-semibold bg-primary/10 text-primary rounded-lg hover:bg-primary hover:text-primary-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                       >
-                        Save
+                        {isSaving ? <Loader2 size={12} className="animate-spin" /> : <SaveIcon size={12} />}
+                        {isSaving ? 'Saving...' : 'Save'}
                       </button>
                     </td>
                   </tr>
@@ -1584,6 +1622,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [isOnline, setIsOnline] = useState(isSupabaseAvailable());
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [isSaving, setIsSaving] = useState(false);
 
   const [schools, setSchools] = useState<any[]>([]);
   const [klasses, setKlasses] = useState<any[]>([]);
@@ -1606,6 +1645,8 @@ export default function App() {
 
   // ── Load Data ──────────────────────────────────────────────────────────────
   const loadData = useCallback(async (showLoading = true) => {
+    // Don't refresh if saving
+    if (isSaving) return;
     if (isRefreshing.current) return;
     
     if (showLoading) {
@@ -1662,17 +1703,17 @@ export default function App() {
         setLoading(false);
       }
     }
-  }, []);
+  }, [isSaving]);
 
-  // ── Auto-Refresh ──────────────────────────────────────────────────────────
+  // ── Auto-Refresh Every 10 Seconds ──────────────────────────────────────────
   useEffect(() => {
     loadData(true);
 
     autoRefreshInterval.current = setInterval(() => {
-      if (isSupabaseAvailable()) {
+      if (isSupabaseAvailable() && !isSaving) {
         loadData(false);
       }
-    }, 1000);
+    }, 10000); // 10 seconds
 
     return () => {
       if (autoRefreshInterval.current) {
@@ -1680,7 +1721,7 @@ export default function App() {
         autoRefreshInterval.current = null;
       }
     };
-  }, []);
+  }, [isSaving]);
 
   // ── Real-time Subscriptions ──────────────────────────────────────────────
   useEffect(() => {
@@ -1688,19 +1729,29 @@ export default function App() {
 
     const channels = [
       supabase!.channel('schools_changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'schools' }, () => loadData(false))
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'schools' }, () => {
+          if (!isSaving) loadData(false);
+        })
         .subscribe(),
       supabase!.channel('classes_changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'classes' }, () => loadData(false))
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'classes' }, () => {
+          if (!isSaving) loadData(false);
+        })
         .subscribe(),
       supabase!.channel('students_changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'students' }, () => loadData(false))
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'students' }, () => {
+          if (!isSaving) loadData(false);
+        })
         .subscribe(),
       supabase!.channel('assessments_changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'assessments' }, () => loadData(false))
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'assessments' }, () => {
+          if (!isSaving) loadData(false);
+        })
         .subscribe(),
       supabase!.channel('documents_changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'documents' }, () => loadData(false))
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'documents' }, () => {
+          if (!isSaving) loadData(false);
+        })
         .subscribe(),
     ];
 
@@ -1712,7 +1763,7 @@ export default function App() {
       channels.forEach(ch => ch.unsubscribe());
       clearInterval(interval);
     };
-  }, [loadData]);
+  }, [loadData, isSaving]);
 
   // ── CRUD Operations ──────────────────────────────────────────────────────
 
@@ -1721,12 +1772,15 @@ export default function App() {
       setError('Cannot save: Database not available');
       return;
     }
+    setIsSaving(true);
     try {
       const { error } = await supabase!.from('schools').insert([newSchool]);
       if (error) throw error;
     } catch (err: any) {
       console.error('Error adding school:', err);
       setError(`Failed to save school: ${err.message}`);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -1735,12 +1789,15 @@ export default function App() {
       setError('Cannot update: Database not available');
       return;
     }
+    setIsSaving(true);
     try {
       const { error } = await supabase!.from('schools').update(updated).eq('id', updated.id);
       if (error) throw error;
     } catch (err: any) {
       console.error('Error updating school:', err);
       setError(`Failed to update school: ${err.message}`);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -1749,12 +1806,15 @@ export default function App() {
       setError('Cannot delete: Database not available');
       return;
     }
+    setIsSaving(true);
     try {
       const { error } = await supabase!.from('schools').delete().eq('id', id);
       if (error) throw error;
     } catch (err: any) {
       console.error('Error deleting school:', err);
       setError(`Failed to delete school: ${err.message}`);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -1763,12 +1823,15 @@ export default function App() {
       setError('Cannot save: Database not available');
       return;
     }
+    setIsSaving(true);
     try {
       const { error } = await supabase!.from('classes').insert([newKlass]);
       if (error) throw error;
     } catch (err: any) {
       console.error('Error adding class:', err);
       setError(`Failed to save class: ${err.message}`);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -1777,12 +1840,15 @@ export default function App() {
       setError('Cannot update: Database not available');
       return;
     }
+    setIsSaving(true);
     try {
       const { error } = await supabase!.from('classes').update(updated).eq('id', updated.id);
       if (error) throw error;
     } catch (err: any) {
       console.error('Error updating class:', err);
       setError(`Failed to update class: ${err.message}`);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -1791,12 +1857,15 @@ export default function App() {
       setError('Cannot delete: Database not available');
       return;
     }
+    setIsSaving(true);
     try {
       const { error } = await supabase!.from('classes').delete().eq('id', id);
       if (error) throw error;
     } catch (err: any) {
       console.error('Error deleting class:', err);
       setError(`Failed to delete class: ${err.message}`);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -1805,6 +1874,7 @@ export default function App() {
       setError('Cannot save: Database not available');
       return;
     }
+    setIsSaving(true);
     try {
       const { error } = await supabase!.from('students').insert([newStudent]);
       if (error) throw error;
@@ -1820,6 +1890,8 @@ export default function App() {
     } catch (err: any) {
       console.error('Error adding student:', err);
       setError(`Failed to save student: ${err.message}`);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -1828,12 +1900,15 @@ export default function App() {
       setError('Cannot update: Database not available');
       return;
     }
+    setIsSaving(true);
     try {
       const { error } = await supabase!.from('students').update(updated).eq('id', updated.id);
       if (error) throw error;
     } catch (err: any) {
       console.error('Error updating student:', err);
       setError(`Failed to update student: ${err.message}`);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -1842,12 +1917,15 @@ export default function App() {
       setError('Cannot delete: Database not available');
       return;
     }
+    setIsSaving(true);
     try {
       const { error } = await supabase!.from('students').delete().eq('id', id);
       if (error) throw error;
     } catch (err: any) {
       console.error('Error deleting student:', err);
       setError(`Failed to delete student: ${err.message}`);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -1870,12 +1948,15 @@ export default function App() {
       setError('Cannot save: Database not available');
       return;
     }
+    setIsSaving(true);
     try {
       const { error } = await supabase!.from('documents').insert([newDoc]);
       if (error) throw error;
     } catch (err: any) {
       console.error('Error adding document:', err);
       setError(`Failed to save document: ${err.message}`);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -1884,12 +1965,15 @@ export default function App() {
       setError('Cannot update: Database not available');
       return;
     }
+    setIsSaving(true);
     try {
       const { error } = await supabase!.from('documents').update({ content }).eq('id', id);
       if (error) throw error;
     } catch (err: any) {
       console.error('Error updating document:', err);
       setError(`Failed to update document: ${err.message}`);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -1898,12 +1982,15 @@ export default function App() {
       setError('Cannot delete: Database not available');
       return;
     }
+    setIsSaving(true);
     try {
       const { error } = await supabase!.from('documents').delete().eq('id', id);
       if (error) throw error;
     } catch (err: any) {
       console.error('Error deleting document:', err);
       setError(`Failed to delete document: ${err.message}`);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -1920,7 +2007,7 @@ export default function App() {
   const studentAsmts = asmts.filter((a: any) => a.student_id === student?.id);
 
   const handleManualRefresh = () => {
-    loadData(true);
+    if (!isSaving) loadData(true);
   };
 
   // ── Loading State ──────────────────────────────────────────────────────────
@@ -1976,11 +2063,14 @@ export default function App() {
           {isOnline ? 'Connected' : 'Offline'}
         </span>
         <span className="flex items-center gap-2">
-          <RefreshCw size={12} className={isOnline ? 'animate-spin' : ''} />
-          Auto-refresh every 1s
+          <RefreshCw size={12} className={isOnline && !isSaving ? 'animate-spin' : ''} />
+          Auto-refresh every 10s
+          {isSaving && <span className="text-amber-600 ml-2">(Saving...)</span>}
           <span className="text-xs opacity-60 ml-1">{lastRefresh.toLocaleTimeString()}</span>
         </span>
-        <button onClick={handleManualRefresh} className="text-xs font-semibold hover:underline">Refresh</button>
+        <button onClick={handleManualRefresh} className="text-xs font-semibold hover:underline" disabled={isSaving}>
+          {isSaving ? 'Saving...' : 'Refresh'}
+        </button>
       </div>
 
       {/* Sidebar */}
@@ -2032,7 +2122,7 @@ export default function App() {
           </div>
           <div className="flex items-center justify-between text-xs pt-1 border-t border-white/10">
             <span className="text-white/40">Auto-refresh</span>
-            <span className="text-white/70 font-mono text-[10px]">Every 1s</span>
+            <span className="text-white/70 font-mono text-[10px]">Every 10s</span>
           </div>
         </div>
       </aside>
