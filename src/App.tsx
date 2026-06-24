@@ -441,200 +441,6 @@ function AddDocModal({ schools, klasses, onSave, onClose }: { schools: any[]; kl
   );
 }
 
-// ── Score Input Modal ──────────────────────────────────────────────────────
-function ScoreInputModal({ 
-  klass, 
-  students, 
-  asmts, 
-  onSave,
-  onClose 
-}: { 
-  klass: any; 
-  students: any[]; 
-  asmts: any[]; 
-  onSave: (id: string, score: number) => void;
-  onClose: () => void;
-}) {
-  const [selectedTerm, setSelectedTerm] = useState<Term>(1);
-  const [selectedType, setSelectedType] = useState<AType>("test1");
-  const [scores, setScores] = useState<Record<string, string>>({});
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    const existingScores: Record<string, string> = {};
-    students.forEach((student: any) => {
-      const assessment = asmts.find((a: any) => 
-        a.student_id === student.id && 
-        a.term === selectedTerm && 
-        a.type === selectedType &&
-        a.year === klass.academic_year
-      );
-      if (assessment) {
-        existingScores[student.id] = String(assessment.score);
-      } else {
-        existingScores[student.id] = "";
-      }
-    });
-    setScores(existingScores);
-  }, [students, asmts, selectedTerm, selectedType, klass.academic_year]);
-
-  const handleScoreChange = (studentId: string, value: string) => {
-    setScores(prev => ({ ...prev, [studentId]: value }));
-  };
-
-  const handleSaveAll = async () => {
-    setSaving(true);
-    try {
-      const savePromises = students.map((student: any) => {
-        const scoreValue = scores[student.id];
-        if (scoreValue !== undefined && scoreValue !== "") {
-          const score = parseFloat(scoreValue);
-          if (!isNaN(score) && score >= 0) {
-            const existing = asmts.find((a: any) => 
-              a.student_id === student.id && 
-              a.term === selectedTerm && 
-              a.type === selectedType &&
-              a.year === klass.academic_year
-            );
-            if (existing) {
-              return onSave(existing.id, Math.round(score));
-            }
-          }
-        }
-        return Promise.resolve();
-      });
-      await Promise.all(savePromises);
-      onClose();
-    } catch (error) {
-      console.error('Error saving scores:', error);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const maxScore = AMAX[selectedType];
-
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col animate-in fade-in zoom-in duration-200">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border flex-shrink-0">
-          <div>
-            <h2 className="font-bold text-lg">Input Scores</h2>
-            <p className="text-sm text-muted-foreground">{klass.name} · {klass.subject}</p>
-          </div>
-          <button onClick={onClose} className="p-1.5 hover:bg-muted rounded-lg"><X size={18} /></button>
-        </div>
-        
-        <div className="px-6 py-4 border-b border-border flex-shrink-0">
-          <div className="flex flex-wrap gap-4">
-            <div>
-              <label className={labelCls}>Term</label>
-              <select 
-                value={selectedTerm} 
-                onChange={(e) => setSelectedTerm(Number(e.target.value) as Term)}
-                className={inputCls + " w-40"}
-              >
-                <option value={1}>First Term</option>
-                <option value={2}>Second Term</option>
-                <option value={3}>Third Term</option>
-              </select>
-            </div>
-            <div>
-              <label className={labelCls}>Assessment Type</label>
-              <select 
-                value={selectedType} 
-                onChange={(e) => setSelectedType(e.target.value as AType)}
-                className={inputCls + " w-40"}
-              >
-                {ATYPES.map(t => <option key={t} value={t}>{AL[t]} (Max: {AMAX[t]})</option>)}
-              </select>
-            </div>
-            <div className="flex items-end">
-              <span className="text-sm text-muted-foreground">
-                Max Score: <span className="font-bold">{maxScore}</span>
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-6">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-muted/30">
-                <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">#</th>
-                <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Student</th>
-                <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Score</th>
-                <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Grade</th>
-                <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">%</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {students.map((student: any, index: number) => {
-                const scoreVal = parseFloat(scores[student.id] || "0");
-                const isValid = !isNaN(scoreVal) && scoreVal >= 0 && scoreVal <= maxScore;
-                const grade = isValid ? gradeStr(scoreVal, maxScore) : "N/A";
-                const percentage = isValid ? pct(scoreVal, maxScore) : 0;
-                
-                return (
-                  <tr key={student.id} className="hover:bg-muted/20 transition-colors">
-                    <td className="px-4 py-3 text-muted-foreground font-mono">{index + 1}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <Avatar student={student} size="sm" />
-                        <span className="font-medium">{student.first_name} {student.last_name}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <input
-                        type="number"
-                        min={0}
-                        max={maxScore}
-                        value={scores[student.id] || ""}
-                        onChange={(e) => handleScoreChange(student.id, e.target.value)}
-                        className="w-24 border border-border rounded-lg px-3 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/20"
-                        placeholder="-"
-                      />
-                      <span className="text-xs text-muted-foreground ml-2">/ {maxScore}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      {scores[student.id] && scores[student.id] !== "" && (
-                        <span className={`text-sm font-bold px-2.5 py-1 rounded-full ${GRADE_COLORS[grade as Grade] || "bg-gray-100 text-gray-600"}`}>
-                          {grade}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      {scores[student.id] && scores[student.id] !== "" && isValid && (
-                        <span className={`text-sm font-mono ${percentage >= 80 ? "text-emerald-600" : percentage >= 60 ? "text-amber-600" : "text-red-600"}`}>
-                          {percentage}%
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="flex gap-3 px-6 py-4 border-t border-border flex-shrink-0">
-          <button onClick={onClose} className="flex-1 py-2.5 border border-border rounded-xl text-sm hover:bg-muted transition-colors">
-            Cancel
-          </button>
-          <button 
-            onClick={handleSaveAll}
-            disabled={saving}
-            className="flex-1 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-50"
-          >
-            {saving ? <Loader2 size={16} className="animate-spin" /> : <SaveIcon size={16} />}
-            {saving ? 'Saving...' : 'Save All Scores'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ── Views ──────────────────────────────────────────────────────────────────
 
 function SchoolsView({ schools, onOpen, onAdd, onDelete, onEdit, loading }: { 
@@ -924,6 +730,7 @@ function StudentsView({ school, klass, students, asmts, onOpen, onAdd, onBack, o
   );
 }
 
+// ── FIXED StudentDetailView ──────────────────────────────────────────────────
 function StudentDetailView({ 
   school, klass, student, asmts, onUpdateScore, onBack, onBackClass, onBackSchool, onUpdateStudent 
 }: { 
@@ -937,28 +744,40 @@ function StudentDetailView({
   const [editVal, setEditVal] = useState("");
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [selectedYear, setSelectedYear] = useState(CURRENT_YEAR);
+  const [saving, setSaving] = useState(false);
 
-  const termAsmts = asmts.filter((a: any) => a.term === term && a.year === selectedYear);
+  // Filter assessments for the current student, term, and year
+  const filteredAsmts = asmts.filter((a: any) => a.year === selectedYear);
+  
+  const termAsmts = filteredAsmts.filter((a: any) => a.term === term);
   const getAsmt = (t: AType) => termAsmts.find((a: any) => a.type === t);
-  const overall = avgPct(asmts.filter((a: any) => a.year === selectedYear));
+  
+  const overall = avgPct(filteredAsmts);
   const termAvg = avgPct(termAsmts);
-  const yearAsmts = asmts.filter((a: any) => a.year === selectedYear);
+  
+  const yearAsmts = filteredAsmts;
   const termGrades: { term: Term; grade: Grade; percentage: number; year: string }[] = [1, 2, 3].map(t => {
     const tAsmts = yearAsmts.filter((a: any) => a.term === t);
     const p = avgPct(tAsmts);
     return { term: t as Term, grade: p !== null ? gradeStr(p, 100) : "F", percentage: p || 0, year: selectedYear };
   });
+  
   const years = Array.from(new Set(asmts.map((a: any) => a.year))).sort();
+  
   const typeIcons: Record<AType, React.ReactNode> = { 
     test1: <ClipboardList size={16} />, test2: <ClipboardList size={16} />, 
     test3: <ClipboardList size={16} />, project: <GraduationCap size={16} />, 
     exam: <BarChart2 size={16} /> 
   };
 
-  const commitEdit = (a: any) => {
+  const commitEdit = async (a: any) => {
     const v = parseFloat(editVal);
-    if (!isNaN(v) && v >= 0 && v <= a.max) onUpdateScore(a.id, Math.round(v));
-    setEditId(null);
+    if (!isNaN(v) && v >= 0 && v <= a.max) {
+      setSaving(true);
+      await onUpdateScore(a.id, Math.round(v));
+      setSaving(false);
+      setEditId(null);
+    }
   };
 
   const handleAvatarUpload = (file: File) => {
@@ -1076,8 +895,8 @@ function StudentDetailView({
                     autoFocus
                   />
                   <span className="text-sm text-gray-500">/ {a.max}</span>
-                  <button onClick={() => commitEdit(a)} className="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                    <Check size={14} />
+                  <button onClick={() => commitEdit(a)} disabled={saving} className="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50">
+                    {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
                   </button>
                   <button onClick={() => setEditId(null)} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
                     <X size={14} />
@@ -2127,10 +1946,6 @@ export default function App() {
           <div className="flex items-center justify-between text-xs">
             <span className="text-white/40">Documents</span>
             <span className="text-white/70 font-mono font-bold">{docs.length}</span>
-          </div>
-          <div className="flex items-center justify-between text-xs pt-1 border-t border-white/10">
-            <span className="text-white/40">Auto-refresh</span>
-            <span className="text-white/70 font-mono text-[10px]">On change</span>
           </div>
         </div>
       </aside>
