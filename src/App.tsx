@@ -136,6 +136,8 @@ function Avatar({ student, size = "md", editable = false, onUpload }: {
   );
 }
 
+// ── MODALS ──────────────────────────────────────────────────────────────────
+
 // ── AddSchoolModal ──────────────────────────────────────────────────────────
 function AddSchoolModal({ onSave, onClose }: { onSave: (s: any) => void; onClose: () => void }) {
   const [f, setF] = useState({ name: "", address: "", principal: "", email: "", phone: "", color: "#1e3a5f" });
@@ -445,6 +447,8 @@ function AddDocModal({ schools, klasses, onSave, onClose }: { schools: any[]; kl
     </div>
   );
 }
+
+// ── VIEWS ──────────────────────────────────────────────────────────────────
 
 // ── SchoolsView ──────────────────────────────────────────────────────────
 function SchoolsView({ schools, onOpen, onAdd, onDelete, onEdit }: { 
@@ -1641,7 +1645,7 @@ function ScoreInputModal({
   );
 }
 
-// ── Main App ──────────────────────────────────────────────────────────────────
+// ── MAIN APP ──────────────────────────────────────────────────────────────────
 export default function App() {
   const [view, setView] = useState<View>("schools");
   const [school, setSchool] = useState<any | null>(null);
@@ -1670,7 +1674,7 @@ export default function App() {
 
   const isRefreshing = useRef(false);
 
-  // ── Load Data ──────────────────────────────────────────────────────────────
+  // ── Load Data from Supabase ──────────────────────────────────────────────
   const loadData = useCallback(async (showLoading = true) => {
     if (isRefreshing.current) return;
     
@@ -1711,7 +1715,7 @@ export default function App() {
       setAsmts(assessmentsRes.data || []);
       setDocs(docsRes.data || []);
       
-      console.log('✅ Data loaded successfully!');
+      console.log('✅ Data loaded successfully from Supabase!');
     } catch (err: any) {
       console.error('❌ Error loading data:', err);
       if (showLoading) {
@@ -1773,7 +1777,7 @@ export default function App() {
     };
   }, [loadData]);
 
-  // ── CRUD Operations ──────────────────────────────────────────────────────
+  // ── CRUD Operations (All connected to Supabase) ──────────────────────────
 
   const addSchool = async (newSchool: any) => {
     if (!isSupabaseAvailable()) {
@@ -1783,6 +1787,7 @@ export default function App() {
     try {
       const { error } = await supabase!.from('schools').insert([newSchool]);
       if (error) throw error;
+      await loadData(false);
     } catch (err: any) {
       console.error('Error adding school:', err);
       setError(`Failed to save school: ${err.message}`);
@@ -1797,6 +1802,7 @@ export default function App() {
     try {
       const { error } = await supabase!.from('schools').update(updated).eq('id', updated.id);
       if (error) throw error;
+      await loadData(false);
     } catch (err: any) {
       console.error('Error updating school:', err);
       setError(`Failed to update school: ${err.message}`);
@@ -1811,6 +1817,7 @@ export default function App() {
     try {
       const { error } = await supabase!.from('schools').delete().eq('id', id);
       if (error) throw error;
+      await loadData(false);
     } catch (err: any) {
       console.error('Error deleting school:', err);
       setError(`Failed to delete school: ${err.message}`);
@@ -1825,6 +1832,7 @@ export default function App() {
     try {
       const { error } = await supabase!.from('classes').insert([newKlass]);
       if (error) throw error;
+      await loadData(false);
     } catch (err: any) {
       console.error('Error adding class:', err);
       setError(`Failed to save class: ${err.message}`);
@@ -1839,6 +1847,7 @@ export default function App() {
     try {
       const { error } = await supabase!.from('classes').update(updated).eq('id', updated.id);
       if (error) throw error;
+      await loadData(false);
     } catch (err: any) {
       console.error('Error updating class:', err);
       setError(`Failed to update class: ${err.message}`);
@@ -1853,6 +1862,7 @@ export default function App() {
     try {
       const { error } = await supabase!.from('classes').delete().eq('id', id);
       if (error) throw error;
+      await loadData(false);
     } catch (err: any) {
       console.error('Error deleting class:', err);
       setError(`Failed to delete class: ${err.message}`);
@@ -1876,6 +1886,7 @@ export default function App() {
       
       const { error: asmtError } = await supabase!.from('assessments').insert(newAsmts);
       if (asmtError) throw asmtError;
+      await loadData(false);
     } catch (err: any) {
       console.error('Error adding student:', err);
       setError(`Failed to save student: ${err.message}`);
@@ -1890,6 +1901,7 @@ export default function App() {
     try {
       const { error } = await supabase!.from('students').update(updated).eq('id', updated.id);
       if (error) throw error;
+      await loadData(false);
     } catch (err: any) {
       console.error('Error updating student:', err);
       setError(`Failed to update student: ${err.message}`);
@@ -1904,6 +1916,7 @@ export default function App() {
     try {
       const { error } = await supabase!.from('students').delete().eq('id', id);
       if (error) throw error;
+      await loadData(false);
     } catch (err: any) {
       console.error('Error deleting student:', err);
       setError(`Failed to delete student: ${err.message}`);
@@ -1919,6 +1932,7 @@ export default function App() {
       const { error } = await supabase!.from('assessments').update({ score }).eq('id', id);
       if (error) throw error;
       console.log('✅ Score updated successfully:', id, score);
+      // Don't reload here - let real-time subscription handle it
     } catch (err: any) {
       console.error('Error updating score:', err);
       setError(`Failed to update score: ${err.message}`);
@@ -1933,6 +1947,7 @@ export default function App() {
     try {
       const { error } = await supabase!.from('documents').insert([newDoc]);
       if (error) throw error;
+      await loadData(false);
     } catch (err: any) {
       console.error('Error adding document:', err);
       setError(`Failed to save document: ${err.message}`);
@@ -1947,6 +1962,7 @@ export default function App() {
     try {
       const { error } = await supabase!.from('documents').update({ content }).eq('id', id);
       if (error) throw error;
+      await loadData(false);
     } catch (err: any) {
       console.error('Error updating document:', err);
       setError(`Failed to update document: ${err.message}`);
@@ -1961,6 +1977,7 @@ export default function App() {
     try {
       const { error } = await supabase!.from('documents').delete().eq('id', id);
       if (error) throw error;
+      await loadData(false);
     } catch (err: any) {
       console.error('Error deleting document:', err);
       setError(`Failed to delete document: ${err.message}`);
@@ -1989,7 +2006,7 @@ export default function App() {
       <div className="flex h-screen bg-background items-center justify-center">
         <div className="text-center">
           <Loader2 size={48} className="animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading data...</p>
+          <p className="text-muted-foreground">Loading data from Supabase...</p>
         </div>
       </div>
     );
@@ -2003,6 +2020,7 @@ export default function App() {
           <WifiOff size={56} className="text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-bold mb-2">Connection Error</h2>
           <p className="text-muted-foreground mb-6">{error}</p>
+          <p className="text-sm text-muted-foreground mb-4">Make sure your Supabase credentials are correct in .env</p>
           <button onClick={handleManualRefresh} className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 rounded-xl font-semibold hover:opacity-90 mx-auto">
             <RefreshCw size={18} /> Retry
           </button>
@@ -2033,7 +2051,7 @@ export default function App() {
       <div className={`fixed top-0 left-0 right-0 z-50 px-4 py-1.5 text-xs text-center font-medium flex items-center justify-between ${isOnline ? 'bg-emerald-50 text-emerald-700 border-b border-emerald-200' : 'bg-amber-50 text-amber-700 border-b border-amber-200'}`}>
         <span className="flex items-center gap-2">
           {isOnline ? <Wifi size={12} /> : <WifiOff size={12} />}
-          {isOnline ? 'Connected' : 'Offline'}
+          {isOnline ? 'Connected to Supabase' : 'Offline'}
         </span>
         <span className="flex items-center gap-2">
           {refreshing ? (
@@ -2041,7 +2059,7 @@ export default function App() {
           ) : (
             <RefreshCw size={14} className="text-muted-foreground" />
           )}
-          {refreshing ? 'Refreshing...' : 'Manual refresh'}
+          {refreshing ? 'Syncing...' : 'Ready'}
         </span>
         <button 
           onClick={handleManualRefresh} 
@@ -2099,6 +2117,10 @@ export default function App() {
           <div className="flex items-center justify-between text-xs">
             <span className="text-white/40">Documents</span>
             <span className="text-white/70 font-mono font-bold">{docs.length}</span>
+          </div>
+          <div className="flex items-center justify-between text-xs pt-1 border-t border-white/10">
+            <span className="text-white/40">Status</span>
+            <span className="text-white/70 font-mono text-[10px]">Supabase</span>
           </div>
         </div>
       </aside>
