@@ -637,13 +637,24 @@ function ScoreInputModal({
 
 // ── Views ──────────────────────────────────────────────────────────────────
 
-function SchoolsView({ schools, onOpen, onAdd, onDelete, onEdit }: { 
+function SchoolsView({ schools, onOpen, onAdd, onDelete, onEdit, loading }: { 
   schools: any[]; 
   onOpen: (s: any) => void; 
   onAdd: () => void; 
   onDelete: (id: string) => void;
   onEdit: (s: any) => void;
+  loading?: boolean;
 }) {
+  if (loading) {
+    return (
+      <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+        <div className="flex items-center justify-center py-24">
+          <Loader2 size={48} className="animate-spin text-primary" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
@@ -703,7 +714,7 @@ function SchoolsView({ schools, onOpen, onAdd, onDelete, onEdit }: {
   );
 }
 
-function ClassesView({ school, klasses, students, onOpen, onAdd, onBack, onDelete, onEdit, onScores }: { 
+function ClassesView({ school, klasses, students, onOpen, onAdd, onBack, onDelete, onEdit, onScores, loading }: { 
   school: any; 
   klasses: any[]; 
   students: any[]; 
@@ -713,7 +724,18 @@ function ClassesView({ school, klasses, students, onOpen, onAdd, onBack, onDelet
   onDelete: (id: string) => void;
   onEdit: (k: any) => void;
   onScores: (k: any) => void;
+  loading?: boolean;
 }) {
+  if (loading) {
+    return (
+      <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+        <div className="flex items-center justify-center py-24">
+          <Loader2 size={48} className="animate-spin text-primary" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
       <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-4 sm:mb-6 overflow-x-auto">
@@ -786,7 +808,7 @@ function ClassesView({ school, klasses, students, onOpen, onAdd, onBack, onDelet
   );
 }
 
-function StudentsView({ school, klass, students, asmts, onOpen, onAdd, onBack, onBackSchool, onDelete, onEdit }: { 
+function StudentsView({ school, klass, students, asmts, onOpen, onAdd, onBack, onBackSchool, onDelete, onEdit, loading }: { 
   school: any; 
   klass: any; 
   students: any[]; 
@@ -797,12 +819,23 @@ function StudentsView({ school, klass, students, asmts, onOpen, onAdd, onBack, o
   onBackSchool: () => void; 
   onDelete: (id: string) => void;
   onEdit: (s: any) => void;
+  loading?: boolean;
 }) {
   const [search, setSearch] = useState("");
   const filteredStudents = students.filter((s: any) => 
     `${s.first_name} ${s.last_name}`.toLowerCase().includes(search.toLowerCase()) || 
     s.email?.toLowerCase().includes(search.toLowerCase())
   );
+
+  if (loading) {
+    return (
+      <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+        <div className="flex items-center justify-center py-24">
+          <Loader2 size={48} className="animate-spin text-primary" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
@@ -1100,7 +1133,7 @@ function StudentDetailView({
   );
 }
 
-function DocsView({ docs, schools, klasses, onAdd, onUpdate, onDelete }: { docs: any[]; schools: any[]; klasses: any[]; onAdd: () => void; onUpdate: (id: string, content: string) => void; onDelete: (id: string) => void }) {
+function DocsView({ docs, schools, klasses, onAdd, onUpdate, onDelete, loading }: { docs: any[]; schools: any[]; klasses: any[]; onAdd: () => void; onUpdate: (id: string, content: string) => void; onDelete: (id: string) => void; loading?: boolean }) {
   const [selected, setSelected] = useState<any | null>(null);
   const [editing, setEditing] = useState(false);
   const [editContent, setEditContent] = useState("");
@@ -1141,6 +1174,14 @@ function DocsView({ docs, schools, klasses, onAdd, onUpdate, onDelete }: { docs:
     };
     return map[t];
   };
+
+  if (loading) {
+    return (
+      <div className="flex w-full h-full items-center justify-center">
+        <Loader2 size={48} className="animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (isMobile) {
     return (
@@ -1398,10 +1439,12 @@ function ScoreManagementView({
   const [selectedType, setSelectedType] = useState<AType>("test1");
   const [editingScores, setEditingScores] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState<Record<string, boolean>>({});
+  const [loading, setLoading] = useState(false);
 
   const maxScore = AMAX[selectedType];
 
   useEffect(() => {
+    setLoading(true);
     const existingScores: Record<string, string> = {};
     students.forEach((student: any) => {
       const assessment = asmts.find((a: any) => 
@@ -1413,6 +1456,7 @@ function ScoreManagementView({
       existingScores[student.id] = assessment ? String(assessment.score) : "";
     });
     setEditingScores(existingScores);
+    setLoading(false);
   }, [students, asmts, selectedTerm, selectedType, klass.academic_year]);
 
   const handleScoreChange = (studentId: string, value: string) => {
@@ -1475,6 +1519,16 @@ function ScoreManagementView({
     );
     return assessment;
   };
+
+  if (loading) {
+    return (
+      <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+        <div className="flex items-center justify-center py-24">
+          <Loader2 size={48} className="animate-spin text-primary" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
@@ -1621,8 +1675,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isOnline, setIsOnline] = useState(isSupabaseAvailable());
-  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
-  const [isSaving, setIsSaving] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const [schools, setSchools] = useState<any[]>([]);
   const [klasses, setKlasses] = useState<any[]>([]);
@@ -1640,13 +1693,10 @@ export default function App() {
   const [editingClass, setEditingClass] = useState<any | null>(null);
   const [editingStudent, setEditingStudent] = useState<any | null>(null);
 
-  const autoRefreshInterval = useRef<NodeJS.Timeout | null>(null);
   const isRefreshing = useRef(false);
 
   // ── Load Data ──────────────────────────────────────────────────────────────
   const loadData = useCallback(async (showLoading = true) => {
-    // Don't refresh if saving
-    if (isSaving) return;
     if (isRefreshing.current) return;
     
     if (showLoading) {
@@ -1663,6 +1713,7 @@ export default function App() {
 
     try {
       isRefreshing.current = true;
+      setRefreshing(true);
       setIsOnline(true);
       
       const [schoolsRes, classesRes, studentsRes, assessmentsRes, docsRes] = await Promise.all([
@@ -1685,10 +1736,8 @@ export default function App() {
       setAsmts(assessmentsRes.data || []);
       setDocs(docsRes.data || []);
       
-      setLastRefresh(new Date());
-      
       if (!showLoading) {
-        console.log('🔄 Auto-refresh completed at:', new Date().toLocaleTimeString());
+        console.log('🔄 Data refreshed at:', new Date().toLocaleTimeString());
       } else {
         console.log('✅ Data loaded successfully!');
       }
@@ -1699,29 +1748,17 @@ export default function App() {
       }
     } finally {
       isRefreshing.current = false;
+      setRefreshing(false);
       if (showLoading) {
         setLoading(false);
       }
     }
-  }, [isSaving]);
+  }, []);
 
-  // ── Auto-Refresh Every 10 Seconds ──────────────────────────────────────────
+  // ── Initial Load ──────────────────────────────────────────────────────────
   useEffect(() => {
     loadData(true);
-
-    autoRefreshInterval.current = setInterval(() => {
-      if (isSupabaseAvailable() && !isSaving) {
-        loadData(false);
-      }
-    }, 10000); // 10 seconds
-
-    return () => {
-      if (autoRefreshInterval.current) {
-        clearInterval(autoRefreshInterval.current);
-        autoRefreshInterval.current = null;
-      }
-    };
-  }, [isSaving]);
+  }, []);
 
   // ── Real-time Subscriptions ──────────────────────────────────────────────
   useEffect(() => {
@@ -1730,27 +1767,27 @@ export default function App() {
     const channels = [
       supabase!.channel('schools_changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'schools' }, () => {
-          if (!isSaving) loadData(false);
+          if (!isRefreshing.current) loadData(false);
         })
         .subscribe(),
       supabase!.channel('classes_changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'classes' }, () => {
-          if (!isSaving) loadData(false);
+          if (!isRefreshing.current) loadData(false);
         })
         .subscribe(),
       supabase!.channel('students_changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'students' }, () => {
-          if (!isSaving) loadData(false);
+          if (!isRefreshing.current) loadData(false);
         })
         .subscribe(),
       supabase!.channel('assessments_changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'assessments' }, () => {
-          if (!isSaving) loadData(false);
+          if (!isRefreshing.current) loadData(false);
         })
         .subscribe(),
       supabase!.channel('documents_changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'documents' }, () => {
-          if (!isSaving) loadData(false);
+          if (!isRefreshing.current) loadData(false);
         })
         .subscribe(),
     ];
@@ -1763,7 +1800,7 @@ export default function App() {
       channels.forEach(ch => ch.unsubscribe());
       clearInterval(interval);
     };
-  }, [loadData, isSaving]);
+  }, [loadData]);
 
   // ── CRUD Operations ──────────────────────────────────────────────────────
 
@@ -1772,15 +1809,12 @@ export default function App() {
       setError('Cannot save: Database not available');
       return;
     }
-    setIsSaving(true);
     try {
       const { error } = await supabase!.from('schools').insert([newSchool]);
       if (error) throw error;
     } catch (err: any) {
       console.error('Error adding school:', err);
       setError(`Failed to save school: ${err.message}`);
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -1789,15 +1823,12 @@ export default function App() {
       setError('Cannot update: Database not available');
       return;
     }
-    setIsSaving(true);
     try {
       const { error } = await supabase!.from('schools').update(updated).eq('id', updated.id);
       if (error) throw error;
     } catch (err: any) {
       console.error('Error updating school:', err);
       setError(`Failed to update school: ${err.message}`);
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -1806,15 +1837,12 @@ export default function App() {
       setError('Cannot delete: Database not available');
       return;
     }
-    setIsSaving(true);
     try {
       const { error } = await supabase!.from('schools').delete().eq('id', id);
       if (error) throw error;
     } catch (err: any) {
       console.error('Error deleting school:', err);
       setError(`Failed to delete school: ${err.message}`);
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -1823,15 +1851,12 @@ export default function App() {
       setError('Cannot save: Database not available');
       return;
     }
-    setIsSaving(true);
     try {
       const { error } = await supabase!.from('classes').insert([newKlass]);
       if (error) throw error;
     } catch (err: any) {
       console.error('Error adding class:', err);
       setError(`Failed to save class: ${err.message}`);
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -1840,15 +1865,12 @@ export default function App() {
       setError('Cannot update: Database not available');
       return;
     }
-    setIsSaving(true);
     try {
       const { error } = await supabase!.from('classes').update(updated).eq('id', updated.id);
       if (error) throw error;
     } catch (err: any) {
       console.error('Error updating class:', err);
       setError(`Failed to update class: ${err.message}`);
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -1857,15 +1879,12 @@ export default function App() {
       setError('Cannot delete: Database not available');
       return;
     }
-    setIsSaving(true);
     try {
       const { error } = await supabase!.from('classes').delete().eq('id', id);
       if (error) throw error;
     } catch (err: any) {
       console.error('Error deleting class:', err);
       setError(`Failed to delete class: ${err.message}`);
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -1874,7 +1893,6 @@ export default function App() {
       setError('Cannot save: Database not available');
       return;
     }
-    setIsSaving(true);
     try {
       const { error } = await supabase!.from('students').insert([newStudent]);
       if (error) throw error;
@@ -1890,8 +1908,6 @@ export default function App() {
     } catch (err: any) {
       console.error('Error adding student:', err);
       setError(`Failed to save student: ${err.message}`);
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -1900,15 +1916,12 @@ export default function App() {
       setError('Cannot update: Database not available');
       return;
     }
-    setIsSaving(true);
     try {
       const { error } = await supabase!.from('students').update(updated).eq('id', updated.id);
       if (error) throw error;
     } catch (err: any) {
       console.error('Error updating student:', err);
       setError(`Failed to update student: ${err.message}`);
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -1917,15 +1930,12 @@ export default function App() {
       setError('Cannot delete: Database not available');
       return;
     }
-    setIsSaving(true);
     try {
       const { error } = await supabase!.from('students').delete().eq('id', id);
       if (error) throw error;
     } catch (err: any) {
       console.error('Error deleting student:', err);
       setError(`Failed to delete student: ${err.message}`);
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -1948,15 +1958,12 @@ export default function App() {
       setError('Cannot save: Database not available');
       return;
     }
-    setIsSaving(true);
     try {
       const { error } = await supabase!.from('documents').insert([newDoc]);
       if (error) throw error;
     } catch (err: any) {
       console.error('Error adding document:', err);
       setError(`Failed to save document: ${err.message}`);
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -1965,15 +1972,12 @@ export default function App() {
       setError('Cannot update: Database not available');
       return;
     }
-    setIsSaving(true);
     try {
       const { error } = await supabase!.from('documents').update({ content }).eq('id', id);
       if (error) throw error;
     } catch (err: any) {
       console.error('Error updating document:', err);
       setError(`Failed to update document: ${err.message}`);
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -1982,15 +1986,12 @@ export default function App() {
       setError('Cannot delete: Database not available');
       return;
     }
-    setIsSaving(true);
     try {
       const { error } = await supabase!.from('documents').delete().eq('id', id);
       if (error) throw error;
     } catch (err: any) {
       console.error('Error deleting document:', err);
       setError(`Failed to delete document: ${err.message}`);
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -2007,7 +2008,7 @@ export default function App() {
   const studentAsmts = asmts.filter((a: any) => a.student_id === student?.id);
 
   const handleManualRefresh = () => {
-    if (!isSaving) loadData(true);
+    if (!isRefreshing.current) loadData(true);
   };
 
   // ── Loading State ──────────────────────────────────────────────────────────
@@ -2063,13 +2064,20 @@ export default function App() {
           {isOnline ? 'Connected' : 'Offline'}
         </span>
         <span className="flex items-center gap-2">
-          <RefreshCw size={12} className={isOnline && !isSaving ? 'animate-spin' : ''} />
-          Auto-refresh every 10s
-          {isSaving && <span className="text-amber-600 ml-2">(Saving...)</span>}
-          <span className="text-xs opacity-60 ml-1">{lastRefresh.toLocaleTimeString()}</span>
+          {refreshing ? (
+            <Loader2 size={14} className="animate-spin text-primary" />
+          ) : (
+            <RefreshCw size={14} className="text-muted-foreground" />
+          )}
+          {refreshing ? 'Refreshing...' : 'Manual refresh'}
         </span>
-        <button onClick={handleManualRefresh} className="text-xs font-semibold hover:underline" disabled={isSaving}>
-          {isSaving ? 'Saving...' : 'Refresh'}
+        <button 
+          onClick={handleManualRefresh} 
+          className="text-xs font-semibold hover:underline flex items-center gap-1"
+          disabled={refreshing}
+        >
+          <RefreshCw size={12} className={refreshing ? 'animate-spin' : ''} />
+          {refreshing ? 'Loading...' : 'Refresh'}
         </button>
       </div>
 
@@ -2122,7 +2130,7 @@ export default function App() {
           </div>
           <div className="flex items-center justify-between text-xs pt-1 border-t border-white/10">
             <span className="text-white/40">Auto-refresh</span>
-            <span className="text-white/70 font-mono text-[10px]">Every 10s</span>
+            <span className="text-white/70 font-mono text-[10px]">On change</span>
           </div>
         </div>
       </aside>
@@ -2153,6 +2161,7 @@ export default function App() {
             onAdd={() => setShowAddDoc(true)}
             onUpdate={updateDoc}
             onDelete={delDoc}
+            loading={loading}
           />
         ) : view === "scores" && klass ? (
           <ScoreManagementView
@@ -2173,6 +2182,7 @@ export default function App() {
                 onAdd={() => setShowAddSchool(true)}
                 onDelete={delSchool}
                 onEdit={(s: any) => setEditingSchool(s)}
+                loading={loading}
               />
             )}
             {view === "classes" && school && (
@@ -2186,6 +2196,7 @@ export default function App() {
                 onDelete={delKlass}
                 onEdit={(k: any) => setEditingClass(k)}
                 onScores={goScores}
+                loading={loading}
               />
             )}
             {view === "students" && school && klass && (
@@ -2200,6 +2211,7 @@ export default function App() {
                 onBackSchool={goSchools}
                 onDelete={delStudent}
                 onEdit={(s: any) => setEditingStudent(s)}
+                loading={loading}
               />
             )}
             {view === "student" && school && klass && student && (
