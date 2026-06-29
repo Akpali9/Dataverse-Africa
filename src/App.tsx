@@ -4,7 +4,7 @@ import {
   FileText, Github, Download, Trash2, GraduationCap,
   ExternalLink, Save, Pencil, Check, BarChart2, ClipboardList,
   Edit2, Camera, Loader2, RefreshCw, Search, AlertCircle,
-  Wifi, WifiOff, Save as SaveIcon
+  Wifi, WifiOff, Save as SaveIcon, LogOut, Mail, Lock
 } from "lucide-react";
 import { supabase, isSupabaseAvailable } from './lib/supabase';
 
@@ -59,7 +59,6 @@ const GRADE_COLORS: Record<Grade, string> = {
 };
 
 // ── Utils ──────────────────────────────────────────────────────────────────────
-// 🔧 FIX: Use crypto.randomUUID() to avoid ID collisions
 const uid = () => crypto.randomUUID();
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -1278,8 +1277,168 @@ function ScoreManagementView({
   );
 }
 
+// ── LOGIN COMPONENT ──────────────────────────────────────────────────────────
+function Login({ onLogin }: { onLogin: () => void }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      if (isSignUp) {
+        const { error } = await supabase.auth.signUp({ email, password });
+        if (error) throw error;
+        alert("Sign-up successful! Please check your email to confirm your account.");
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        onLogin(); // Auth state change will trigger rerender, but this ensures immediate.
+      }
+    } catch (err: any) {
+      setError(err.message || "Authentication failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-2xl shadow-lg">
+        <div>
+          <div className="flex justify-center">
+            <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+              <GraduationCap size={28} className="text-primary" />
+            </div>
+          </div>
+          <h2 className="mt-4 text-center text-3xl font-extrabold text-gray-900">
+            {isSignUp ? "Create your account" : "Sign in to SchoolTrack"}
+          </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            {isSignUp ? "Start managing your school data" : "Access your academic dashboard"}
+          </p>
+        </div>
+
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Email address
+              </label>
+              <div className="mt-1 relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Mail size={18} className="text-gray-400" />
+                </div>
+                <input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="pl-10 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                  placeholder="you@example.com"
+                />
+              </div>
+            </div>
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                Password
+              </label>
+              <div className="mt-1 relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock size={18} className="text-gray-400" />
+                </div>
+                <input
+                  id="password"
+                  type="password"
+                  autoComplete={isSignUp ? "new-password" : "current-password"}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pl-10 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+          </div>
+
+          {error && (
+            <div className="text-sm text-red-600 bg-red-50 p-3 rounded-lg border border-red-200">
+              {error}
+            </div>
+          )}
+
+          <div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-primary hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {loading ? <Loader2 size={20} className="animate-spin" /> : (isSignUp ? "Sign up" : "Sign in")}
+            </button>
+          </div>
+
+          <div className="text-sm text-center">
+            <button
+              type="button"
+              onClick={() => { setIsSignUp(!isSignUp); setError(null); }}
+              className="font-medium text-primary hover:underline focus:outline-none"
+            >
+              {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 // ── MAIN APP ──────────────────────────────────────────────────────────────────
 export default function App() {
+  const [session, setSession] = useState<any>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  // ── Auth state ─────────────────────────────────────────────────────────────
+  useEffect(() => {
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setAuthLoading(false);
+    });
+
+    // Listen for auth changes
+    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setAuthLoading(false);
+    });
+
+    return () => subscription?.unsubscribe();
+  }, []);
+
+  // If still loading auth, show spinner
+  if (authLoading) {
+    return (
+      <div className="flex h-screen bg-background items-center justify-center">
+        <div className="text-center">
+          <Loader2 size={48} className="animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Checking session...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If not authenticated, show login
+  if (!session) {
+    return <Login onLogin={() => {}} />; // onLogin not needed because auth state will update
+  }
+
+  // ── Main dashboard (only when authenticated) ──────────────────────────────
   const [view, setView] = useState<View>("schools");
   const [school, setSchool] = useState<any | null>(null);
   const [klass, setKlass] = useState<any | null>(null);
@@ -1556,7 +1715,6 @@ export default function App() {
     }
   };
 
-  // ── updateScore with proper state update ────────────────────────────────
   const updateScore = async (id: string, score: number) => {
     if (!isSupabaseAvailable()) {
       setError('Cannot update: Database not available');
@@ -1585,14 +1743,12 @@ export default function App() {
     try {
       const { error } = await supabase!.from('documents').insert([newDoc]);
       if (error) {
-        // Log the full error for debugging
         console.error('Supabase insert error:', error);
         throw error;
       }
       await loadData(false);
     } catch (err: any) {
       console.error('Error adding document:', err);
-      // Show a more descriptive error
       setError(`Failed to save document: ${err.message || err.details || 'Unknown error'}`);
     }
   };
@@ -1643,7 +1799,13 @@ export default function App() {
     if (!isRefreshing.current) loadData(true);
   };
 
-  // ── Loading State ──────────────────────────────────────────────────────────
+  // ── Logout ──────────────────────────────────────────────────────────────────
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    // session will be set to null by the auth listener
+  };
+
+  // ── Loading State for data ──────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="flex h-screen bg-background items-center justify-center">
@@ -1686,7 +1848,7 @@ export default function App() {
     );
   }
 
-  // ── Render ──────────────────────────────────────────────────────────────────
+  // ── Render Main Dashboard ──────────────────────────────────────────────────
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       {/* Connection Status Bar */}
@@ -1760,6 +1922,12 @@ export default function App() {
             <span className="text-white/40">Documents</span>
             <span className="text-white/70 font-mono font-bold">{docs.length}</span>
           </div>
+          <button
+            onClick={handleLogout}
+            className="w-full mt-3 flex items-center gap-2 justify-center text-white/60 hover:text-white hover:bg-white/10 py-2 rounded-xl text-xs font-semibold transition-colors border border-white/10"
+          >
+            <LogOut size={14} /> Logout
+          </button>
         </div>
       </aside>
 
@@ -1776,6 +1944,12 @@ export default function App() {
           className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg text-xs ${view === "docs" ? "text-primary" : "text-muted-foreground"}`}
         >
           <FileText size={20} /> Docs
+        </button>
+        <button
+          onClick={handleLogout}
+          className="flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg text-xs text-red-500"
+        >
+          <LogOut size={20} /> Logout
         </button>
       </nav>
 
