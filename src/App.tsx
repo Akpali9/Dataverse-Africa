@@ -62,6 +62,13 @@ const GRADE_COLORS: Record<Grade, string> = {
 const uid = () => crypto.randomUUID();
 const today = () => new Date().toISOString().slice(0, 10);
 
+// 🔧 FIX: Normalize GitHub URLs (add https:// if missing)
+const normalizeUrl = (url: string) => {
+  if (!url) return '#';
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  return `https://${url}`;
+};
+
 const pct = (s: number, m: number) => Math.round((s / m) * 100);
 const gradeStr = (s: number, m: number): Grade => {
   const p = pct(s, m);
@@ -697,7 +704,7 @@ function StudentsView({ school, klass, students, asmts, onOpen, onAdd, onBack, o
                     </div>
                     {student.github && (
                       <a
-                        href={student.github}
+                        href={normalizeUrl(student.github)}
                         className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-white bg-[#24292e] hover:bg-[#1b1f23] rounded-full transition-colors"
                       >
                         <Github size={12} /> GitHub
@@ -812,7 +819,7 @@ function StudentDetailView({ school, klass, student, asmts, onUpdateScore, onBac
                     <p className="text-sm text-muted-foreground">{student.email}</p>
                     {student.github && (
                       <a
-                        href={student.github}
+                        href={normalizeUrl(student.github)}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-[#24292e] hover:bg-[#1b1f23] rounded-full transition-colors mt-1"
                       >
                         <Github size={14} /> GitHub Profile
