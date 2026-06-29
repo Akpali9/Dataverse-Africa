@@ -59,8 +59,8 @@ const GRADE_COLORS: Record<Grade, string> = {
 };
 
 // ── Utils ──────────────────────────────────────────────────────────────────────
-let _n = 9000;
-const uid = () => String(++_n);
+// 🔧 FIX: Use crypto.randomUUID() to avoid ID collisions
+const uid = () => crypto.randomUUID();
 const today = () => new Date().toISOString().slice(0, 10);
 
 const pct = (s: number, m: number) => Math.round((s / m) * 100);
@@ -344,7 +344,6 @@ function EditStudentModal({ student, onSave, onClose }: { student: Student; onSa
 
 // Add Document Modal
 function AddDocModal({ schools, klasses, onSave, onClose }: { schools: School[]; klasses: Klass[]; onSave: (doc: any) => Promise<void>; onClose: () => void }) {
-  // 🔧 FIX: set initial class_id to null instead of ""
   const [form, setForm] = useState({ 
     school_id: "", 
     class_id: null as string | null, 
@@ -1557,18 +1556,16 @@ export default function App() {
     }
   };
 
-  // ── FIXED: updateScore with proper state update ──────────────────────────
+  // ── updateScore with proper state update ────────────────────────────────
   const updateScore = async (id: string, score: number) => {
     if (!isSupabaseAvailable()) {
       setError('Cannot update: Database not available');
       return;
     }
     try {
-      // Update the score in Supabase
       const { error } = await supabase!.from('assessments').update({ score }).eq('id', id);
       if (error) throw error;
       
-      // Update local state immediately
       setAsmts(prev => prev.map((a: any) => 
         a.id === id ? { ...a, score } : a
       ));
@@ -1587,11 +1584,16 @@ export default function App() {
     }
     try {
       const { error } = await supabase!.from('documents').insert([newDoc]);
-      if (error) throw error;
+      if (error) {
+        // Log the full error for debugging
+        console.error('Supabase insert error:', error);
+        throw error;
+      }
       await loadData(false);
     } catch (err: any) {
       console.error('Error adding document:', err);
-      setError(`Failed to save document: ${err.message}`);
+      // Show a more descriptive error
+      setError(`Failed to save document: ${err.message || err.details || 'Unknown error'}`);
     }
   };
 
