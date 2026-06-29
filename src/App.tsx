@@ -696,7 +696,10 @@ function StudentsView({ school, klass, students, asmts, onOpen, onAdd, onBack, o
                       </div>
                     </div>
                     {student.github && (
-                      <a href={student.github} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1">
+                      <a
+                        href={student.github}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-white bg-[#24292e] hover:bg-[#1b1f23] rounded-full transition-colors"
+                      >
                         <Github size={12} /> GitHub
                       </a>
                     )}
@@ -808,7 +811,10 @@ function StudentDetailView({ school, klass, student, asmts, onUpdateScore, onBac
                     <h1 className="text-2xl font-bold">{student.first_name} {student.last_name}</h1>
                     <p className="text-sm text-muted-foreground">{student.email}</p>
                     {student.github && (
-                      <a href={student.github} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline flex items-center gap-1 mt-1">
+                      <a
+                        href={student.github}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-[#24292e] hover:bg-[#1b1f23] rounded-full transition-colors mt-1"
+                      >
                         <Github size={14} /> GitHub Profile
                       </a>
                     )}
