@@ -344,7 +344,16 @@ function EditStudentModal({ student, onSave, onClose }: { student: Student; onSa
 
 // Add Document Modal
 function AddDocModal({ schools, klasses, onSave, onClose }: { schools: School[]; klasses: Klass[]; onSave: (doc: any) => Promise<void>; onClose: () => void }) {
-  const [form, setForm] = useState({ school_id: "", class_id: "", term: 1 as Term, type: "test1" as AType, title: "", content: "", year: CURRENT_YEAR });
+  // 🔧 FIX: set initial class_id to null instead of ""
+  const [form, setForm] = useState({ 
+    school_id: "", 
+    class_id: null as string | null, 
+    term: 1 as Term, 
+    type: "test1" as AType, 
+    title: "", 
+    content: "", 
+    year: CURRENT_YEAR 
+  });
 
   const handleSubmit = async () => {
     await onSave({ ...form, id: uid(), created_at: today() });
@@ -363,7 +372,11 @@ function AddDocModal({ schools, klasses, onSave, onClose }: { schools: School[];
             <option value="">Select school</option>
             {schools.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
-          <select value={form.class_id || ""} onChange={(e) => setForm({ ...form, class_id: e.target.value || null })} className={inputCls}>
+          <select 
+            value={form.class_id ?? ""} 
+            onChange={(e) => setForm({ ...form, class_id: e.target.value || null })}
+            className={inputCls}
+          >
             <option value="">General (no class)</option>
             {klasses.filter((k: any) => k.school_id === form.school_id).map((k: any) => <option key={k.id} value={k.id}>{k.name}</option>)}
           </select>
