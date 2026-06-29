@@ -1401,10 +1401,10 @@ function Login({ onLogin }: { onLogin: () => void }) {
 
 // ── MAIN APP ──────────────────────────────────────────────────────────────────
 export default function App() {
+  // ── Auth state ─────────────────────────────────────────────────────────────
   const [session, setSession] = useState<any>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
-  // ── Auth state ─────────────────────────────────────────────────────────────
   useEffect(() => {
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -1412,33 +1412,18 @@ export default function App() {
       setAuthLoading(false);
     });
 
-    // Listen for auth changes
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+    // Listen for auth changes - CORRECT
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setAuthLoading(false);
     });
 
-    return () => subscription?.unsubscribe();
+    return () => {
+      subscription?.unsubscribe();
+    };
   }, []);
 
-  // If still loading auth, show spinner
-  if (authLoading) {
-    return (
-      <div className="flex h-screen bg-background items-center justify-center">
-        <div className="text-center">
-          <Loader2 size={48} className="animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Checking session...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // If not authenticated, show login
-  if (!session) {
-    return <Login onLogin={() => {}} />; // onLogin not needed because auth state will update
-  }
-
-  // ── Main dashboard (only when authenticated) ──────────────────────────────
+  // ── ALL other hooks (must be called before any conditional return) ─────
   const [view, setView] = useState<View>("schools");
   const [school, setSchool] = useState<any | null>(null);
   const [klass, setKlass] = useState<any | null>(null);
@@ -1805,7 +1790,23 @@ export default function App() {
     // session will be set to null by the auth listener
   };
 
-  // ── Loading State for data ──────────────────────────────────────────────────
+  // ── Conditionally render based on auth state ──────────────────────────────
+  if (authLoading) {
+    return (
+      <div className="flex h-screen bg-background items-center justify-center">
+        <div className="text-center">
+          <Loader2 size={48} className="animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Checking session...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return <Login onLogin={() => {}} />;
+  }
+
+  // ── Data loading states ───────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="flex h-screen bg-background items-center justify-center">
@@ -1817,7 +1818,6 @@ export default function App() {
     );
   }
 
-  // ── Error State ─────────────────────────────────────────────────────────────
   if (error && error.includes('Cannot connect')) {
     return (
       <div className="flex h-screen bg-background items-center justify-center">
