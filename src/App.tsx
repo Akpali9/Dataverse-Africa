@@ -62,7 +62,6 @@ const GRADE_COLORS: Record<Grade, string> = {
 const uid = () => crypto.randomUUID();
 const today = () => new Date().toISOString().slice(0, 10);
 
-// 🔧 FIX: Normalize GitHub URLs (add https:// if missing)
 const normalizeUrl = (url: string) => {
   if (!url) return '#';
   if (url.startsWith('http://') || url.startsWith('https://')) return url;
@@ -154,7 +153,7 @@ function AddSchoolModal({ onSave, onClose }: { onSave: (school: any) => Promise<
   };
 
   return (
-    <div className="fixed inset-0 bg-black/10 flex items-center justify-center z-10 p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold">Add School</h2>
@@ -187,7 +186,7 @@ function EditSchoolModal({ school, onSave, onClose }: { school: School; onSave: 
   };
 
   return (
-    <div className="fixed inset-0 bg-black/10 flex items-center justify-center z-10 p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold">Edit School</h2>
@@ -220,7 +219,7 @@ function AddClassModal({ schoolId, onSave, onClose }: { schoolId: string; onSave
   };
 
   return (
-    <div className="fixed inset-0 bg-black/10 flex items-center justify-center z-10 p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold">Add Class</h2>
@@ -251,7 +250,7 @@ function EditClassModal({ klass, onSave, onClose }: { klass: Klass; onSave: (kla
   };
 
   return (
-    <div className="fixed inset-0 bg-black/10 flex items-center justify-center z-10 p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold">Edit Class</h2>
@@ -282,7 +281,7 @@ function AddStudentModal({ classId, onSave, onClose }: { classId: string; onSave
   };
 
   return (
-    <div className="fixed inset-0 bg-black/10 flex items-center justify-center z-10 p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold">Add Student</h2>
@@ -320,7 +319,7 @@ function EditStudentModal({ student, onSave, onClose }: { student: Student; onSa
   };
 
   return (
-    <div className="fixed inset-0 bg-black/10 flex items-center justify-center z-10 p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold">Edit Student</h2>
@@ -366,7 +365,7 @@ function AddDocModal({ schools, klasses, onSave, onClose }: { schools: School[];
   };
 
   return (
-    <div className="fixed inset-0 bg-black/10 flex items-center justify-center z-10 p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold">Add Document</h2>
@@ -438,7 +437,7 @@ function ScoreInputModal({ klass, students, asmts, onSave, onClose }: {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/10 flex items-center justify-center z-10 p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold">Enter Scores</h2>
@@ -1443,7 +1442,7 @@ export default function App() {
   const [student, setStudent] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isOnline, setIsOnline] = useState(true); // initially true
+  const [isOnline, setIsOnline] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const [schools, setSchools] = useState<any[]>([]);
@@ -1473,7 +1472,6 @@ export default function App() {
     }
     setError(null);
     
-    // Check availability via sync function
     if (!isSupabaseAvailable()) {
       setError('Cannot connect to database. Please check your connection.');
       if (showLoading) setLoading(false);
@@ -1866,7 +1864,7 @@ export default function App() {
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       {/* Connection Status Bar */}
-      <div className={`fixed top-0 left-0 right-0 z-10 px-4 py-1.5 text-xs text-center font-medium flex items-center justify-between ${isOnline ? 'bg-emerald-10 text-emerald-700 border-b border-emerald-200' : 'bg-amber-10 text-amber-700 border-b border-amber-200'}`}>
+      <div className={`fixed top-0 left-0 right-0 z-50 px-4 py-1.5 text-xs text-center font-medium flex items-center justify-between ${isOnline ? 'bg-emerald-10 text-emerald-700 border-b border-emerald-200' : 'bg-amber-10 text-amber-700 border-b border-amber-200'}`}>
         <span className="flex items-center gap-2">
           {isOnline ? <Wifi size={12} /> : <WifiOff size={12} />}
           {isOnline ? 'Connected to Supabase' : 'Offline'}
@@ -1946,7 +1944,7 @@ export default function App() {
       </aside>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-border z-10 flex justify-around py-2">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-border z-50 flex justify-around py-2">
         <button
           onClick={goSchools}
           className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg text-xs ${view !== "docs" && view !== "scores" ? "text-primary" : "text-muted-foreground"}`}
@@ -1967,8 +1965,8 @@ export default function App() {
         </button>
       </nav>
 
-      {/* Main content */}
-      <main className="flex-1 flex flex-col overflow-hidden min-w-0 pb-16 md:pb-0 mt-8">
+      {/* Main content – now scrollable */}
+      <main className="flex-1 flex flex-col min-w-0 pb-16 md:pb-0 mt-8 overflow-y-auto">
         {view === "docs" ? (
           <DocsView
             docs={docs}
@@ -1989,7 +1987,8 @@ export default function App() {
             onBackSchool={goSchools}
           />
         ) : (
-          <div className="flex-1 overflow-y-auto">
+          // Removed the inner overflow wrapper – main handles scrolling
+          <>
             {view === "schools" && (
               <SchoolsView
                 schools={schools}
@@ -2039,7 +2038,7 @@ export default function App() {
                 onUpdateStudent={editStudent}
               />
             )}
-          </div>
+          </>
         )}
       </main>
 
