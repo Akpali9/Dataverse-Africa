@@ -145,6 +145,7 @@ function Avatar({ student, size = "md", editable = false, onUpload }: {
 }
 
 // ── MODALS ──────────────────────────────────────────────────────────────────
+// (All modals unchanged – identical to the previous version)
 
 function AddSchoolModal({ onSave, onClose }: { onSave: (school: any) => Promise<void>; onClose: () => void }) {
   const [form, setForm] = useState({ name: "", address: "", principal: "", email: "", phone: "", color: "#6366f1" });
@@ -939,7 +940,7 @@ function DocsView({ docs, schools, klasses, onAdd, onUpdate, onDelete }: {
   );
 }
 
-// ── SCORE MANAGEMENT VIEW (with autosave and auto-create) ──────────────────
+// ── SCORE MANAGEMENT VIEW (with autosave, auto‑create, and grade display) ──
 
 function ScoreManagementView({
   school,
@@ -972,9 +973,10 @@ function ScoreManagementView({
   const maxScore = AMAX[selectedType];
   const debounceTimers = useRef<Record<string, NodeJS.Timeout>>({});
 
+  // Load scores into editingScores whenever asmts or filters change
   useEffect(() => {
     setLoading(true);
-    const existingScores: Record<string, string> = {};
+    const newScores: Record<string, string> = {};
     let missingCount = 0;
     students.forEach((student: any) => {
       const assessment = asmts.find((a: any) =>
@@ -984,13 +986,13 @@ function ScoreManagementView({
         a.year === klass.academic_year
       );
       if (assessment) {
-        existingScores[student.id] = String(assessment.score);
+        newScores[student.id] = String(assessment.score);
       } else {
         missingCount++;
-        existingScores[student.id] = "";
+        newScores[student.id] = "";
       }
     });
-    setEditingScores(existingScores);
+    setEditingScores(newScores);
     setLoading(false);
     if (missingCount > 0) {
       setDebugInfo(`⚠️ ${missingCount} student(s) missing assessments – will auto‑create on save.`);
@@ -1056,8 +1058,9 @@ function ScoreManagementView({
       }
 
       await onUpdateScore(assessmentId, Math.round(score));
-      setSaveSuccess(prev => ({ ...prev, [studentId]: true }));
+      // Update the editing state immediately with the rounded score
       setEditingScores(prev => ({ ...prev, [studentId]: String(Math.round(score)) }));
+      setSaveSuccess(prev => ({ ...prev, [studentId]: true }));
 
       if (onRefresh) onRefresh();
     } catch (err) {
@@ -1323,6 +1326,7 @@ function ScoreManagementView({
                           {grade}
                         </span>
                       )}
+                      {(!currentScore || currentScore === "") && <span className="text-muted-foreground">-</span>}
                     </td>
                     <td className="px-4 sm:px-6 py-4">
                       {currentScore && currentScore !== "" && isValid && (
@@ -1330,6 +1334,7 @@ function ScoreManagementView({
                           {percentage}%
                         </span>
                       )}
+                      {(!currentScore || currentScore === "") && <span className="text-muted-foreground">-</span>}
                     </td>
                     <td className="px-4 sm:px-6 py-4">
                       <span className="text-xs flex items-center gap-1">
