@@ -145,7 +145,6 @@ function Avatar({ student, size = "md", editable = false, onUpload }: {
 }
 
 // ── MODALS ──────────────────────────────────────────────────────────────────
-// (All modals unchanged – identical to the previous version)
 
 function AddSchoolModal({ onSave, onClose }: { onSave: (school: any) => Promise<void>; onClose: () => void }) {
   const [form, setForm] = useState({ name: "", address: "", principal: "", email: "", phone: "", color: "#6366f1" });
@@ -940,7 +939,7 @@ function DocsView({ docs, schools, klasses, onAdd, onUpdate, onDelete }: {
   );
 }
 
-// ── SCORE MANAGEMENT VIEW (with autosave, auto‑create, and grade display) ──
+// ── SCORE MANAGEMENT VIEW (with debug panel) ────────────────────────────────
 
 function ScoreManagementView({
   school,
@@ -969,6 +968,7 @@ function ScoreManagementView({
   const [saveSuccess, setSaveSuccess] = useState<Record<string, boolean>>({});
   const [debugInfo, setDebugInfo] = useState<string>("");
   const [generating, setGenerating] = useState(false);
+  const [showDebug, setShowDebug] = useState(false);
 
   const maxScore = AMAX[selectedType];
   const debounceTimers = useRef<Record<string, NodeJS.Timeout>>({});
@@ -978,6 +978,23 @@ function ScoreManagementView({
     setLoading(true);
     const newScores: Record<string, string> = {};
     let missingCount = 0;
+
+    // Debug: log what we're filtering
+    console.log('🔍 ScoreManagementView filtering:', {
+      term: selectedTerm,
+      type: selectedType,
+      year: klass.academic_year,
+      students: students.map(s => s.id)
+    });
+
+    // Find matching assessments
+    const matching = asmts.filter((a: any) =>
+      a.term === selectedTerm &&
+      a.type === selectedType &&
+      a.year === klass.academic_year
+    );
+    console.log(`✅ Found ${matching.length} matching assessments.`);
+
     students.forEach((student: any) => {
       const assessment = asmts.find((a: any) =>
         a.student_id === student.id &&
@@ -994,10 +1011,11 @@ function ScoreManagementView({
     });
     setEditingScores(newScores);
     setLoading(false);
+
     if (missingCount > 0) {
-      setDebugInfo(`⚠️ ${missingCount} student(s) missing assessments – will auto‑create on save.`);
+      setDebugInfo(`⚠️ ${missingCount} student(s) missing assessments – will auto‑create on save. (Matching assessments: ${matching.length})`);
     } else {
-      setDebugInfo(`✅ All students have assessments for ${AL[selectedType]} (Term ${selectedTerm}).`);
+      setDebugInfo(`✅ All students have assessments for ${AL[selectedType]} (Term ${selectedTerm}). (Matching: ${matching.length})`);
     }
   }, [students, asmts, selectedTerm, selectedType, klass.academic_year]);
 
@@ -1058,7 +1076,6 @@ function ScoreManagementView({
       }
 
       await onUpdateScore(assessmentId, Math.round(score));
-      // Update the editing state immediately with the rounded score
       setEditingScores(prev => ({ ...prev, [studentId]: String(Math.round(score)) }));
       setSaveSuccess(prev => ({ ...prev, [studentId]: true }));
 
@@ -1195,6 +1212,22 @@ function ScoreManagementView({
     );
   }
 
+  // Build debug data
+  const matchingAssessments = asmts.filter((a: any) =>
+    a.term === selectedTerm &&
+    a.type === selectedType &&
+    a.year === klass.academic_year
+  );
+  const debugData = {
+    totalAssessments: asmts.length,
+    matchingAssessments: matchingAssessments.length,
+    students: students.map(s => ({
+      name: `${s.first_name} ${s.last_name}`,
+      id: s.id,
+      assessment: matchingAssessments.find(a => a.student_id === s.id)
+    }))
+  };
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
       <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-4 sm:mb-6 overflow-x-auto">
@@ -1215,6 +1248,12 @@ function ScoreManagementView({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setShowDebug(!showDebug)}
+            className="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+          >
+            {showDebug ? 'Hide Debug' : 'Show Debug'}
+          </button>
           <button
             onClick={generateMissingAssessments}
             disabled={generating}
@@ -1271,6 +1310,26 @@ function ScoreManagementView({
           </div>
         </div>
       </div>
+
+      {showDebug && (
+        <div className="mb-6 p-4 bg-gray-100 rounded-xl border border-gray-300 text-xs font-mono overflow-auto max-h-60">
+          <h4 className="font-bold mb-2">🔍 Debug Info</h4>
+          <p>Total assessments in DB: {debugData.totalAssessments}</p>
+          <p>Matching current filters (term={selectedTerm}, type={selectedType}, year={klass.academic_year}): {debugData.matchingAssessments}</p>
+          <div className="mt-2">
+            {debugData.students.map(s => (
+              <div key={s.id} className="border-t border-gray-200 py-1">
+                <span className="font-semibold">{s.name}</span> → 
+                {s.assessment ? (
+                  <span className="text-green-600"> ✅ ID: {s.assessment.id}, score: {s.assessment.score}</span>
+                ) : (
+                  <span className="text-red-500"> ❌ No assessment</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
