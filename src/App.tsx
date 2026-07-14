@@ -1032,12 +1032,14 @@ function ScoreManagementView({
   const [saving, setSaving] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState<Record<string, boolean>>({});
+  const [debugInfo, setDebugInfo] = useState<string>("");
 
   const maxScore = AMAX[selectedType];
 
   useEffect(() => {
     setLoading(true);
     const existingScores: Record<string, string> = {};
+    let missingCount = 0;
     students.forEach((student: any) => {
       const assessment = asmts.find((a: any) => 
         a.student_id === student.id && 
@@ -1045,10 +1047,20 @@ function ScoreManagementView({
         a.type === selectedType &&
         a.year === klass.academic_year
       );
-      existingScores[student.id] = assessment ? String(assessment.score) : "";
+      if (assessment) {
+        existingScores[student.id] = String(assessment.score);
+      } else {
+        missingCount++;
+        existingScores[student.id] = "";
+      }
     });
     setEditingScores(existingScores);
     setLoading(false);
+    if (missingCount > 0) {
+      setDebugInfo(`⚠️ ${missingCount} student(s) have no assessment for ${AL[selectedType]} (Term ${selectedTerm}). Scores will be saved only for existing assessments.`);
+    } else {
+      setDebugInfo(`✅ All students have assessments for ${AL[selectedType]} (Term ${selectedTerm}).`);
+    }
   }, [students, asmts, selectedTerm, selectedType, klass.academic_year]);
 
   const handleScoreChange = (studentId: string, value: string) => {
@@ -1073,6 +1085,8 @@ function ScoreManagementView({
           if (assessment) {
             await onUpdateScore(assessment.id, Math.round(score));
             setSaveSuccess(prev => ({ ...prev, [studentId]: true }));
+          } else {
+            alert(`No assessment record found for this student (${studentId}) – please add a student via the Students view.`);
           }
         } catch (error) {
           console.error('Error saving score:', error);
@@ -1142,6 +1156,7 @@ function ScoreManagementView({
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Score Management</h1>
           <p className="text-sm text-muted-foreground">{klass.name} · {klass.subject} · {klass.academic_year}</p>
+          <p className="text-xs text-muted-foreground mt-1">{debugInfo}</p>
         </div>
         <button 
           onClick={handleSaveAll}
@@ -1247,7 +1262,7 @@ function ScoreManagementView({
                     <td className="px-4 sm:px-6 py-4">
                       <button
                         onClick={() => handleSaveScore(student.id)}
-                        disabled={!currentScore || currentScore === "" || isSaving}
+                        disabled={!currentScore || currentScore === "" || isSaving || !assessment}
                         className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1 ${
                           isSuccess 
                             ? 'bg-emerald-50 text-emerald-700' 
@@ -1255,7 +1270,7 @@ function ScoreManagementView({
                         } disabled:opacity-50 disabled:cursor-not-allowed`}
                       >
                         {isSaving ? <Loader2 size={12} className="animate-spin" /> : isSuccess ? <Check size={12} /> : <SaveIcon size={12} />}
-                        {isSaving ? 'Saving...' : isSuccess ? 'Saved!' : 'Save'}
+                        {isSaving ? 'Saving...' : isSuccess ? 'Saved!' : assessment ? 'Save' : 'No record'}
                       </button>
                     </td>
                   </tr>
@@ -1483,6 +1498,7 @@ export default function App() {
       setDocs(docsRes.data || []);
       
       console.log('✅ Data loaded successfully from Supabase!');
+      console.log(`📊 Loaded ${assessmentsRes.data?.length || 0} assessments.`);
     } catch (err: any) {
       console.error('❌ Error loading data:', err);
       if (showLoading) {
@@ -1696,17 +1712,31 @@ export default function App() {
       return;
     }
     try {
-      const { error } = await supabase.from('assessments').update({ score }).eq('id', id);
-      if (error) throw error;
+      console.log(`📝 Updating assessment ${id} to score ${score}`);
+      const { error, data } = await supabase
+        .from('assessments')
+        .update({ score })
+        .eq('id', id)
+        .select(); // returns the updated row
+
+      if (error) {
+        console.error('❌ Supabase update error:', error);
+        throw error;
+      }
       
+      console.log('✅ Score updated successfully:', data);
+      
+      // Update local state optimistically
       setAsmts(prev => prev.map((a: any) => 
         a.id === id ? { ...a, score } : a
       ));
       
-      console.log('✅ Score updated successfully:', id, score);
+      // Optionally reload to ensure consistency
+      // await loadData(false);
     } catch (err: any) {
-      console.error('Error updating score:', err);
+      console.error('❌ Error updating score:', err);
       setError(`Failed to update score: ${err.message}`);
+      throw err; // re-throw so caller can handle
     }
   };
 
@@ -1940,7 +1970,7 @@ export default function App() {
         </button>
       </nav>
 
-      {/* Main content – now scrollable */}
+      {/* Main content – scrollable */}
       <main className="flex-1 flex flex-col min-w-0 pb-16 md:pb-0 mt-8 overflow-y-auto">
         {view === "docs" ? (
           <DocsView
