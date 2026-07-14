@@ -11,7 +11,7 @@ import { supabase, isSupabaseAvailable } from './lib/supabase';
 // ── Types ─────────────────────────────────────────────────────────────────────
 type View = "schools" | "classes" | "students" | "student" | "docs" | "scores";
 type Term = 1 | 2 | 3;
-type AType = "test1" | "test2" | "test3" | "project" | "exam";
+type AType = "test1" | "test2" | "assignment " | "project" | "exam";
 type Grade = "A+" | "A" | "B" | "C" | "D" | "F";
 
 interface School {
@@ -43,19 +43,19 @@ interface Doc {
 const CURRENT_YEAR = "2024-2025";
 const TL: Record<Term, string> = { 1: "First Term", 2: "Second Term", 3: "Third Term" };
 const AL: Record<AType, string> = { 
-  test1: "Test 1", test2: "Test 2", test3: "Test 3", 
+  test1: "Test 1", test2: "Test 2", assignment : "Test 3", 
   project: "Project", exam: "Final Exam" 
 };
-const AMAX: Record<AType, number> = { test1: 30, test2: 30, test3: 30, project: 50, exam: 100 };
-const ATYPES: AType[] = ["test1", "test2", "test3", "project", "exam"];
+const AMAX: Record<AType, number> = { test1: 20, test2: 20, assignment : 10, project: 10, exam: 60 };
+const ATYPES: AType[] = ["test1", "test2", "assignment ", "project", "exam"];
 
 const GRADE_COLORS: Record<Grade, string> = {
-  "A+": "text-emerald-600 bg-emerald-50",
-  "A": "text-emerald-600 bg-emerald-50",
-  "B": "text-blue-600 bg-blue-50",
-  "C": "text-amber-600 bg-amber-50",
-  "D": "text-orange-600 bg-orange-50",
-  "F": "text-red-600 bg-red-50",
+  "A+": "text-emerald-600 bg-emerald-10",
+  "A": "text-emerald-600 bg-emerald-10",
+  "B": "text-blue-600 bg-blue-10",
+  "C": "text-amber-600 bg-amber-10",
+  "D": "text-orange-600 bg-orange-10",
+  "F": "text-red-600 bg-red-10",
 };
 
 // ── Utils ──────────────────────────────────────────────────────────────────────
@@ -69,23 +69,23 @@ const normalizeUrl = (url: string) => {
   return `https://${url}`;
 };
 
-const pct = (s: number, m: number) => Math.round((s / m) * 100);
+const pct = (s: number, m: number) => Math.round((s / m) * 60);
 const gradeStr = (s: number, m: number): Grade => {
   const p = pct(s, m);
-  return p >= 90 ? "A+" : p >= 80 ? "A" : p >= 70 ? "B" : p >= 60 ? "C" : p >= 50 ? "D" : "F";
+  return p >= 90 ? "A+" : p >= 80 ? "A" : p >= 70 ? "B" : p >= 60 ? "C" : p >= 10 ? "D" : "F";
 };
 const avgPct = (asmts: Asmt[]) =>
   asmts.length ? Math.round(asmts.reduce((sum, a) => sum + pct(a.score, a.max_score), 0) / asmts.length) : null;
 
 const badgeCls = (s: number, m: number) => {
   const p = pct(s, m);
-  return p >= 80 ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
-    : p >= 60 ? "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
-    : "bg-red-50 text-red-700 ring-1 ring-red-200";
+  return p >= 80 ? "bg-emerald-10 text-emerald-700 ring-1 ring-emerald-200"
+    : p >= 60 ? "bg-amber-10 text-amber-700 ring-1 ring-amber-200"
+    : "bg-red-10 text-red-700 ring-1 ring-red-200";
 };
 const barCls = (s: number, m: number) => {
   const p = pct(s, m);
-  return p >= 80 ? "bg-emerald-500" : p >= 60 ? "bg-amber-500" : "bg-red-500";
+  return p >= 80 ? "bg-emerald-60" : p >= 60 ? "bg-amber-60" : "bg-red-60";
 };
 
 const inputCls = "w-full border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground";
@@ -133,7 +133,7 @@ function Avatar({ student, size = "md", editable = false, onUpload }: {
         ) : initials}
       </div>
       {editable && (
-        <label className={`absolute inset-0 rounded-full cursor-pointer flex items-center justify-center bg-black/50 transition-opacity ${isHovering ? 'opacity-100' : 'opacity-0'}`}>
+        <label className={`absolute inset-0 rounded-full cursor-pointer flex items-center justify-center bg-black/10 transition-opacity ${isHovering ? 'opacity-60' : 'opacity-0'}`}>
           <Camera size={size === "sm" ? 12 : size === "md" ? 16 : 20} className="text-white" />
           <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
         </label>
@@ -154,7 +154,7 @@ function AddSchoolModal({ onSave, onClose }: { onSave: (school: any) => Promise<
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/10 flex items-center justify-center z-10 p-4">
       <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold">Add School</h2>
@@ -187,7 +187,7 @@ function EditSchoolModal({ school, onSave, onClose }: { school: School; onSave: 
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/10 flex items-center justify-center z-10 p-4">
       <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold">Edit School</h2>
@@ -220,7 +220,7 @@ function AddClassModal({ schoolId, onSave, onClose }: { schoolId: string; onSave
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/10 flex items-center justify-center z-10 p-4">
       <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold">Add Class</h2>
@@ -251,7 +251,7 @@ function EditClassModal({ klass, onSave, onClose }: { klass: Klass; onSave: (kla
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/10 flex items-center justify-center z-10 p-4">
       <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold">Edit Class</h2>
@@ -282,7 +282,7 @@ function AddStudentModal({ classId, onSave, onClose }: { classId: string; onSave
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/10 flex items-center justify-center z-10 p-4">
       <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold">Add Student</h2>
@@ -320,7 +320,7 @@ function EditStudentModal({ student, onSave, onClose }: { student: Student; onSa
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/10 flex items-center justify-center z-10 p-4">
       <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold">Edit Student</h2>
@@ -366,7 +366,7 @@ function AddDocModal({ schools, klasses, onSave, onClose }: { schools: School[];
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/10 flex items-center justify-center z-10 p-4">
       <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold">Add Document</h2>
@@ -394,7 +394,7 @@ function AddDocModal({ schools, klasses, onSave, onClose }: { schools: School[];
             {ATYPES.map(t => <option key={t} value={t}>{AL[t]}</option>)}
           </select>
           <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className={inputCls} placeholder="Document title" />
-          <textarea value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} className={inputCls + " min-h-[100px]"} placeholder="Document content" />
+          <textarea value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} className={inputCls + " min-h-[60px]"} placeholder="Document content" />
         </div>
         <div className="flex gap-2 mt-4">
           <button onClick={handleSubmit} className="flex-1 bg-primary text-primary-foreground py-2.5 rounded-xl font-semibold hover:opacity-90">Save</button>
@@ -438,7 +438,7 @@ function ScoreInputModal({ klass, students, asmts, onSave, onClose }: {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/10 flex items-center justify-center z-10 p-4">
       <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold">Enter Scores</h2>
@@ -454,7 +454,7 @@ function ScoreInputModal({ klass, students, asmts, onSave, onClose }: {
             {ATYPES.map(t => <option key={t} value={t}>{AL[t]} (Max: {AMAX[t]})</option>)}
           </select>
         </div>
-        <div className="max-h-[50vh] overflow-y-auto space-y-2">
+        <div className="max-h-[10vh] overflow-y-auto space-y-2">
           {students.map((student) => {
             const assessment = asmts.find((a: any) => 
               a.student_id === student.id && a.term === term && a.type === type && a.year === klass.academic_year
@@ -478,7 +478,7 @@ function ScoreInputModal({ klass, students, asmts, onSave, onClose }: {
           })}
         </div>
         <div className="flex gap-2 mt-4">
-          <button onClick={handleSubmit} disabled={saving} className="flex-1 bg-primary text-primary-foreground py-2.5 rounded-xl font-semibold hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2">
+          <button onClick={handleSubmit} disabled={saving} className="flex-1 bg-primary text-primary-foreground py-2.5 rounded-xl font-semibold hover:opacity-90 disabled:opacity-10 flex items-center justify-center gap-2">
             {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
             {saving ? "Saving..." : "Save All Scores"}
           </button>
@@ -534,11 +534,11 @@ function SchoolsView({ schools, onOpen, onAdd, onDelete, onEdit }: {
                     <p className="text-xs text-muted-foreground">{school.principal}</p>
                   </div>
                 </div>
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex gap-1 opacity-0 group-hover:opacity-60 transition-opacity">
                   <button onClick={() => onEdit(school)} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
                     <Pencil size={14} />
                   </button>
-                  <button onClick={() => { if (confirm('Delete this school?')) onDelete(school.id); }} className="p-1.5 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors">
+                  <button onClick={() => { if (confirm('Delete this school?')) onDelete(school.id); }} className="p-1.5 rounded-lg hover:bg-red-10 hover:text-red-600 transition-colors">
                     <Trash2 size={14} />
                   </button>
                 </div>
@@ -549,7 +549,7 @@ function SchoolsView({ schools, onOpen, onAdd, onDelete, onEdit }: {
               </div>
               <button
                 onClick={() => onOpen(school)}
-                className="mt-4 w-full flex items-center justify-between bg-muted/50 hover:bg-muted rounded-xl px-4 py-2.5 text-sm transition-colors"
+                className="mt-4 w-full flex items-center justify-between bg-muted/10 hover:bg-muted rounded-xl px-4 py-2.5 text-sm transition-colors"
               >
                 <span className="font-medium">View Classes</span>
                 <ChevronRight size={16} />
@@ -610,11 +610,11 @@ function ClassesView({ school, klasses, students, onOpen, onAdd, onBack, onDelet
                     <p className="text-sm text-muted-foreground">{klass.subject} · {klass.teacher}</p>
                     <p className="text-xs text-muted-foreground">{klass.academic_year}</p>
                   </div>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-60 transition-opacity">
                     <button onClick={() => onEdit(klass)} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
                       <Pencil size={14} />
                     </button>
-                    <button onClick={() => { if (confirm('Delete this class?')) onDelete(klass.id); }} className="p-1.5 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors">
+                    <button onClick={() => { if (confirm('Delete this class?')) onDelete(klass.id); }} className="p-1.5 rounded-lg hover:bg-red-10 hover:text-red-600 transition-colors">
                       <Trash2 size={14} />
                     </button>
                   </div>
@@ -623,7 +623,7 @@ function ClassesView({ school, klasses, students, onOpen, onAdd, onBack, onDelet
                   <span className="flex items-center gap-1.5 text-muted-foreground"><Users size={14} /> {studentCount} students</span>
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={() => onOpen(klass)} className="flex-1 flex items-center justify-center gap-1.5 bg-muted/50 hover:bg-muted rounded-xl px-4 py-2 text-sm transition-colors">
+                  <button onClick={() => onOpen(klass)} className="flex-1 flex items-center justify-center gap-1.5 bg-muted/10 hover:bg-muted rounded-xl px-4 py-2 text-sm transition-colors">
                     <Users size={14} /> Students
                   </button>
                   <button onClick={() => onScores(klass)} className="flex-1 flex items-center justify-center gap-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl px-4 py-2 text-sm transition-colors">
@@ -693,11 +693,11 @@ function StudentsView({ school, klass, students, asmts, onOpen, onAdd, onBack, o
                         <h3 className="font-semibold">{student.first_name} {student.last_name}</h3>
                         <p className="text-xs text-muted-foreground truncate">{student.email}</p>
                       </div>
-                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-60 transition-opacity">
                         <button onClick={() => onEdit(student)} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
                           <Pencil size={14} />
                         </button>
-                        <button onClick={() => { if (confirm('Delete this student?')) onDelete(student.id); }} className="p-1.5 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors">
+                        <button onClick={() => { if (confirm('Delete this student?')) onDelete(student.id); }} className="p-1.5 rounded-lg hover:bg-red-10 hover:text-red-600 transition-colors">
                           <Trash2 size={14} />
                         </button>
                       </div>
@@ -715,14 +715,14 @@ function StudentsView({ school, klass, students, asmts, onOpen, onAdd, onBack, o
                 {avg !== null && (
                   <div className="flex items-center gap-2 mt-2">
                     <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                      <div className={`h-full ${barCls(avg, 100)} transition-all`} style={{ width: `${avg}%` }} />
+                      <div className={`h-full ${barCls(avg, 60)} transition-all`} style={{ width: `${avg}%` }} />
                     </div>
                     <span className={`text-xs font-bold ${avg >= 80 ? 'text-emerald-600' : avg >= 60 ? 'text-amber-600' : 'text-red-600'}`}>
                       {avg}%
                     </span>
                   </div>
                 )}
-                <button onClick={() => onOpen(student)} className="mt-3 w-full flex items-center justify-between bg-muted/50 hover:bg-muted rounded-xl px-4 py-2 text-sm transition-colors">
+                <button onClick={() => onOpen(student)} className="mt-3 w-full flex items-center justify-between bg-muted/10 hover:bg-muted rounded-xl px-4 py-2 text-sm transition-colors">
                   <span className="font-medium">View Details</span>
                   <ChevronRight size={16} />
                 </button>
@@ -838,7 +838,7 @@ function StudentDetailView({ school, klass, student, asmts, onUpdateScore, onBac
 
       {/* Scores Table */}
       <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
-        <div className="px-6 py-4 border-b border-border bg-muted/30">
+        <div className="px-6 py-4 border-b border-border bg-muted/20">
           <h3 className="font-semibold">Academic Performance</h3>
         </div>
         <div className="overflow-x-auto">
@@ -877,7 +877,7 @@ function StudentDetailView({ school, klass, student, asmts, onUpdateScore, onBac
                               <button
                                 onClick={() => handleSaveScore(assessment.id, maxScore)}
                                 disabled={isSaving}
-                                className="p-1 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-colors disabled:opacity-50"
+                                className="p-1 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-colors disabled:opacity-10"
                               >
                                 {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                               </button>
@@ -987,7 +987,7 @@ function DocsView({ docs, schools, klasses, onAdd, onUpdate, onDelete }: {
                   <button onClick={() => handleEdit(doc)} className="p-1.5 rounded-lg hover:bg-muted transition-colors" title="Edit">
                     <Pencil size={14} />
                   </button>
-                  <button onClick={() => { if (confirm('Delete this document?')) onDelete(doc.id); }} className="p-1.5 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors" title="Delete">
+                  <button onClick={() => { if (confirm('Delete this document?')) onDelete(doc.id); }} className="p-1.5 rounded-lg hover:bg-red-10 hover:text-red-600 transition-colors" title="Delete">
                     <Trash2 size={14} />
                   </button>
                 </div>
@@ -997,7 +997,7 @@ function DocsView({ docs, schools, klasses, onAdd, onUpdate, onDelete }: {
                   <textarea
                     value={editContent}
                     onChange={(e) => setEditContent(e.target.value)}
-                    className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 min-h-[100px]"
+                    className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 min-h-[60px]"
                   />
                   <div className="flex gap-2">
                     <button onClick={() => handleSave(doc.id)} className="bg-primary text-primary-foreground px-4 py-1.5 rounded-lg text-sm font-semibold hover:opacity-90">Save</button>
@@ -1005,7 +1005,7 @@ function DocsView({ docs, schools, klasses, onAdd, onUpdate, onDelete }: {
                   </div>
                 </div>
               ) : (
-                <div className="bg-muted/30 rounded-xl p-4 text-sm whitespace-pre-wrap max-h-[200px] overflow-y-auto">
+                <div className="bg-muted/20 rounded-xl p-4 text-sm whitespace-pre-wrap max-h-[200px] overflow-y-auto">
                   {doc.content}
                 </div>
               )}
@@ -1208,7 +1208,7 @@ function ScoreManagementView({
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-border bg-muted/30">
+              <tr className="border-b border-border bg-muted/20">
                 <th className="text-left px-4 sm:px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">#</th>
                 <th className="text-left px-4 sm:px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Student</th>
                 <th className="text-left px-4 sm:px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Score</th>
@@ -1253,7 +1253,7 @@ function ScoreManagementView({
                     </td>
                     <td className="px-4 sm:px-6 py-4">
                       {currentScore && currentScore !== "" && (
-                        <span className={`text-sm font-bold px-2.5 py-1 rounded-full ${GRADE_COLORS[grade as Grade] || "bg-gray-100 text-gray-600"}`}>
+                        <span className={`text-sm font-bold px-2.5 py-1 rounded-full ${GRADE_COLORS[grade as Grade] || "bg-gray-60 text-gray-600"}`}>
                           {grade}
                         </span>
                       )}
@@ -1271,9 +1271,9 @@ function ScoreManagementView({
                         disabled={!currentScore || currentScore === "" || isSaving}
                         className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1 ${
                           isSuccess 
-                            ? 'bg-emerald-50 text-emerald-700' 
+                            ? 'bg-emerald-10 text-emerald-700' 
                             : 'bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground'
-                        } disabled:opacity-50 disabled:cursor-not-allowed`}
+                        } disabled:opacity-10 disabled:cursor-not-allowed`}
                       >
                         {isSaving ? <Loader2 size={12} className="animate-spin" /> : isSuccess ? <Check size={12} /> : <SaveIcon size={12} />}
                         {isSaving ? 'Saving...' : isSuccess ? 'Saved!' : 'Save'}
@@ -1321,7 +1321,7 @@ function Login({ onLogin }: { onLogin: () => void }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gray-10 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-2xl shadow-lg">
         <div>
           <div className="flex justify-center">
@@ -1354,7 +1354,7 @@ function Login({ onLogin }: { onLogin: () => void }) {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                  className="pl-10 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary"
                   placeholder="you@example.com"
                 />
               </div>
@@ -1374,7 +1374,7 @@ function Login({ onLogin }: { onLogin: () => void }) {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                  className="pl-10 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary"
                   placeholder="••••••••"
                 />
               </div>
@@ -1382,7 +1382,7 @@ function Login({ onLogin }: { onLogin: () => void }) {
           </div>
 
           {error && (
-            <div className="text-sm text-red-600 bg-red-50 p-3 rounded-lg border border-red-200">
+            <div className="text-sm text-red-600 bg-red-10 p-3 rounded-lg border border-red-200">
               {error}
             </div>
           )}
@@ -1391,7 +1391,7 @@ function Login({ onLogin }: { onLogin: () => void }) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-primary hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-primary hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-10 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? <Loader2 size={20} className="animate-spin" /> : (isSignUp ? "Sign up" : "Sign in")}
             </button>
@@ -1560,7 +1560,7 @@ export default function App() {
 
     const interval = setInterval(() => {
       setIsOnline(isSupabaseAvailable());
-    }, 30000);
+    }, 20000);
 
     return () => {
       channels.forEach(ch => ch.unsubscribe());
@@ -1836,7 +1836,7 @@ export default function App() {
     return (
       <div className="flex h-screen bg-background items-center justify-center">
         <div className="text-center max-w-md p-6 bg-card rounded-2xl shadow-lg">
-          <WifiOff size={56} className="text-red-500 mx-auto mb-4" />
+          <WifiOff size={56} className="text-red-60 mx-auto mb-4" />
           <h2 className="text-xl font-bold mb-2">Connection Error</h2>
           <p className="text-muted-foreground mb-6">{error}</p>
           <button onClick={handleManualRefresh} className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 rounded-xl font-semibold hover:opacity-90 mx-auto">
@@ -1851,7 +1851,7 @@ export default function App() {
     return (
       <div className="flex h-screen bg-background items-center justify-center">
         <div className="text-center max-w-md p-6 bg-card rounded-2xl shadow-lg">
-          <AlertCircle size={56} className="text-red-500 mx-auto mb-4" />
+          <AlertCircle size={56} className="text-red-60 mx-auto mb-4" />
           <h2 className="text-xl font-bold mb-2">Error</h2>
           <p className="text-muted-foreground mb-6">{error}</p>
           <button onClick={handleManualRefresh} className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 rounded-xl font-semibold hover:opacity-90 mx-auto">
@@ -1866,7 +1866,7 @@ export default function App() {
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       {/* Connection Status Bar */}
-      <div className={`fixed top-0 left-0 right-0 z-50 px-4 py-1.5 text-xs text-center font-medium flex items-center justify-between ${isOnline ? 'bg-emerald-50 text-emerald-700 border-b border-emerald-200' : 'bg-amber-50 text-amber-700 border-b border-amber-200'}`}>
+      <div className={`fixed top-0 left-0 right-0 z-10 px-4 py-1.5 text-xs text-center font-medium flex items-center justify-between ${isOnline ? 'bg-emerald-10 text-emerald-700 border-b border-emerald-200' : 'bg-amber-10 text-amber-700 border-b border-amber-200'}`}>
         <span className="flex items-center gap-2">
           {isOnline ? <Wifi size={12} /> : <WifiOff size={12} />}
           {isOnline ? 'Connected to Supabase' : 'Offline'}
@@ -1904,7 +1904,7 @@ export default function App() {
         </div>
 
         <nav className="flex-1 p-3 space-y-1 pt-4 overflow-y-auto">
-          <p className="text-white/30 text-[10px] font-bold uppercase tracking-widest px-3 mb-2">Navigation</p>
+          <p className="text-white/20 text-[10px] font-bold uppercase tracking-widest px-3 mb-2">Navigation</p>
           <button
             onClick={goSchools}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${view !== "docs" && view !== "scores" ? "bg-white/15 text-white" : "text-white/55 hover:text-white hover:bg-white/10"}`}
@@ -1946,7 +1946,7 @@ export default function App() {
       </aside>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-border z-50 flex justify-around py-2">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-border z-10 flex justify-around py-2">
         <button
           onClick={goSchools}
           className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg text-xs ${view !== "docs" && view !== "scores" ? "text-primary" : "text-muted-foreground"}`}
@@ -1961,7 +1961,7 @@ export default function App() {
         </button>
         <button
           onClick={handleLogout}
-          className="flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg text-xs text-red-500"
+          className="flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg text-xs text-red-60"
         >
           <LogOut size={20} /> Logout
         </button>
