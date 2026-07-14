@@ -72,12 +72,10 @@ const normalizeUrl = (url: string) => {
 };
 
 const pct = (s: number, m: number) => Math.round((s / m) * 100);
-
 const gradeStr = (s: number, m: number): Grade => {
   const p = pct(s, m);
   return p >= 90 ? "A+" : p >= 80 ? "A" : p >= 70 ? "B" : p >= 60 ? "C" : p >= 50 ? "D" : "F";
 };
-
 const avgPct = (asmts: Asmt[]) =>
   asmts.length ? Math.round(asmts.reduce((sum, a) => sum + pct(a.score, a.max_score), 0) / asmts.length) : null;
 
@@ -109,7 +107,7 @@ function dlDoc(doc: Doc) {
   a.click();
 }
 
-// ── Avatar Component ──────────────────────────────────────────────────────────
+// ── Avatar ────────────────────────────────────────────────────────────────────
 function Avatar({ student, size = "md", editable = false, onUpload }: { 
   student: Student; 
   size?: "sm" | "md" | "lg" | "xl";
@@ -147,13 +145,9 @@ function Avatar({ student, size = "md", editable = false, onUpload }: {
 }
 
 // ── MODALS ──────────────────────────────────────────────────────────────────
-// (All modals are unchanged – they're identical to your previous version)
 function AddSchoolModal({ onSave, onClose }: { onSave: (school: any) => Promise<void>; onClose: () => void }) {
   const [form, setForm] = useState({ name: "", address: "", principal: "", email: "", phone: "", color: "#6366f1" });
-  const handleSubmit = async () => {
-    await onSave({ ...form, id: uid(), created_at: today() });
-    onClose();
-  };
+  const handleSubmit = async () => { await onSave({ ...form, id: uid(), created_at: today() }); onClose(); };
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
@@ -180,10 +174,7 @@ function AddSchoolModal({ onSave, onClose }: { onSave: (school: any) => Promise<
 
 function EditSchoolModal({ school, onSave, onClose }: { school: School; onSave: (school: any) => Promise<void>; onClose: () => void }) {
   const [form, setForm] = useState(school);
-  const handleSubmit = async () => {
-    await onSave(form);
-    onClose();
-  };
+  const handleSubmit = async () => { await onSave(form); onClose(); };
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
@@ -210,10 +201,7 @@ function EditSchoolModal({ school, onSave, onClose }: { school: School; onSave: 
 
 function AddClassModal({ schoolId, onSave, onClose }: { schoolId: string; onSave: (klass: any) => Promise<void>; onClose: () => void }) {
   const [form, setForm] = useState({ name: "", teacher: "", subject: "", academic_year: CURRENT_YEAR });
-  const handleSubmit = async () => {
-    await onSave({ ...form, id: uid(), school_id: schoolId, created_at: today() });
-    onClose();
-  };
+  const handleSubmit = async () => { await onSave({ ...form, id: uid(), school_id: schoolId, created_at: today() }); onClose(); };
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
@@ -238,10 +226,7 @@ function AddClassModal({ schoolId, onSave, onClose }: { schoolId: string; onSave
 
 function EditClassModal({ klass, onSave, onClose }: { klass: Klass; onSave: (klass: any) => Promise<void>; onClose: () => void }) {
   const [form, setForm] = useState(klass);
-  const handleSubmit = async () => {
-    await onSave(form);
-    onClose();
-  };
+  const handleSubmit = async () => { await onSave(form); onClose(); };
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
@@ -266,10 +251,7 @@ function EditClassModal({ klass, onSave, onClose }: { klass: Klass; onSave: (kla
 
 function AddStudentModal({ classId, onSave, onClose }: { classId: string; onSave: (student: any) => Promise<void>; onClose: () => void }) {
   const [form, setForm] = useState({ first_name: "", last_name: "", email: "", github: "", phone: "", address: "", date_of_birth: "", guardian_name: "", guardian_phone: "" });
-  const handleSubmit = async () => {
-    await onSave({ ...form, id: uid(), class_id: classId, created_at: today() });
-    onClose();
-  };
+  const handleSubmit = async () => { await onSave({ ...form, id: uid(), class_id: classId, created_at: today() }); onClose(); };
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
@@ -301,10 +283,7 @@ function AddStudentModal({ classId, onSave, onClose }: { classId: string; onSave
 
 function EditStudentModal({ student, onSave, onClose }: { student: Student; onSave: (student: any) => Promise<void>; onClose: () => void }) {
   const [form, setForm] = useState(student);
-  const handleSubmit = async () => {
-    await onSave(form);
-    onClose();
-  };
+  const handleSubmit = async () => { await onSave(form); onClose(); };
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
@@ -336,10 +315,7 @@ function EditStudentModal({ student, onSave, onClose }: { student: Student; onSa
 
 function AddDocModal({ schools, klasses, onSave, onClose }: { schools: School[]; klasses: Klass[]; onSave: (doc: any) => Promise<void>; onClose: () => void }) {
   const [form, setForm] = useState({ school_id: "", class_id: null as string | null, term: 1 as Term, type: "test1" as AType, title: "", content: "", year: CURRENT_YEAR });
-  const handleSubmit = async () => {
-    await onSave({ ...form, id: uid(), created_at: today() });
-    onClose();
-  };
+  const handleSubmit = async () => { await onSave({ ...form, id: uid(), created_at: today() }); onClose(); };
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
@@ -387,7 +363,6 @@ function ScoreInputModal({ klass, students, asmts, onSave, onClose }: {
   const [type, setType] = useState<AType>("test1");
   const [scores, setScores] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
-
   const maxScore = AMAX[type];
 
   const handleSubmit = async () => {
@@ -703,13 +678,10 @@ function StudentDetailView({ school, klass, student, asmts, onUpdateScore, onBac
   const [editedStudent, setEditedStudent] = useState(student);
   const [editingScores, setEditingScores] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState<Record<string, boolean>>({});
-
   const terms = [1, 2, 3] as Term[];
   const types = ATYPES;
 
-  const getScore = (term: Term, type: AType) => {
-    return asmts.find((a: any) => a.term === term && a.type === type);
-  };
+  const getScore = (term: Term, type: AType) => asmts.find((a: any) => a.term === term && a.type === type);
 
   const handleSaveStudent = async () => {
     await onUpdateStudent(editedStudent);
@@ -966,6 +938,7 @@ function DocsView({ docs, schools, klasses, onAdd, onUpdate, onDelete }: {
   );
 }
 
+// ── SCORE MANAGEMENT VIEW (with Generate Missing) ──────────────────────────
 function ScoreManagementView({
   school,
   klass,
@@ -974,7 +947,7 @@ function ScoreManagementView({
   onUpdateScore,
   onBack,
   onBackSchool,
-  onRefresh // Added this prop to allow manual refresh
+  onRefresh
 }: {
   school: any;
   klass: any;
@@ -992,31 +965,12 @@ function ScoreManagementView({
   const [loading, setLoading] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState<Record<string, boolean>>({});
   const [debugInfo, setDebugInfo] = useState<string>("");
+  const [generating, setGenerating] = useState(false);
 
   const maxScore = AMAX[selectedType];
 
   useEffect(() => {
     setLoading(true);
-
-    // 🔍 DEBUG: Log what we're looking for
-    console.log('🔍 ScoreManagementView filtering for:', {
-      term: selectedTerm,
-      type: selectedType,
-      year: klass.academic_year,
-      studentIds: students.map(s => s.id)
-    });
-    console.log('📋 All assessments (sample):', asmts.slice(0, 5));
-    console.log('📊 Total assessments:', asmts.length);
-
-    // Find matching assessments
-    const matching = asmts.filter((a: any) =>
-      a.term === selectedTerm &&
-      a.type === selectedType &&
-      a.year === klass.academic_year
-    );
-    console.log('✅ Matching assessments:', matching.length, matching.map(a => ({ student_id: a.student_id, score: a.score })));
-
-    // Build the scores map
     const existingScores: Record<string, string> = {};
     let missingCount = 0;
     students.forEach((student: any) => {
@@ -1035,10 +989,8 @@ function ScoreManagementView({
     });
     setEditingScores(existingScores);
     setLoading(false);
-
     if (missingCount > 0) {
-      setDebugInfo(`⚠️ ${missingCount} student(s) have no assessment for ${AL[selectedType]} (Term ${selectedTerm}). Scores will be saved only for existing assessments.`);
-      console.warn(`⚠️ Missing assessments for ${missingCount} students.`);
+      setDebugInfo(`⚠️ ${missingCount} student(s) have no assessment for ${AL[selectedType]} (Term ${selectedTerm}). Click "Generate Missing" to create them.`);
     } else {
       setDebugInfo(`✅ All students have assessments for ${AL[selectedType]} (Term ${selectedTerm}).`);
     }
@@ -1066,9 +1018,9 @@ function ScoreManagementView({
           if (assessment) {
             await onUpdateScore(assessment.id, Math.round(score));
             setSaveSuccess(prev => ({ ...prev, [studentId]: true }));
-            if (onRefresh) onRefresh(); // Trigger reload if available
+            if (onRefresh) onRefresh();
           } else {
-            alert(`No assessment record found for this student. Please add the student via the Students view.`);
+            alert(`No assessment record found for this student. Please use "Generate Missing" first.`);
           }
         } catch (error) {
           console.error('Error saving score:', error);
@@ -1104,6 +1056,56 @@ function ScoreManagementView({
     });
     await Promise.all(savePromises);
     if (onRefresh) onRefresh();
+  };
+
+  const generateMissingAssessments = async () => {
+    if (generating) return;
+    const missingStudents = students.filter((s: any) => {
+      const assessment = asmts.find((a: any) =>
+        a.student_id === s.id &&
+        a.term === selectedTerm &&
+        a.type === selectedType &&
+        a.year === klass.academic_year
+      );
+      return !assessment;
+    });
+
+    if (missingStudents.length === 0) {
+      alert('All students already have assessments for this term/type.');
+      return;
+    }
+
+    if (!confirm(`Create ${missingStudents.length} missing assessment(s) for ${AL[selectedType]} (Term ${selectedTerm})?`)) return;
+
+    setGenerating(true);
+    try {
+      const newAssessments = missingStudents.map((s: any) => ({
+        id: uid(),
+        student_id: s.id,
+        term: selectedTerm,
+        type: selectedType,
+        score: 0,
+        max_score: AMAX[selectedType],
+        year: klass.academic_year,
+        created_at: today()
+      }));
+
+      // Insert in batches
+      const batchSize = 100;
+      for (let i = 0; i < newAssessments.length; i += batchSize) {
+        const batch = newAssessments.slice(i, i + batchSize);
+        const { error } = await supabase.from('assessments').insert(batch);
+        if (error) throw error;
+      }
+
+      alert(`✅ Created ${newAssessments.length} missing assessments.`);
+      if (onRefresh) onRefresh();
+    } catch (err: any) {
+      console.error('Error generating assessments:', err);
+      alert(`❌ Failed to create assessments: ${err.message}`);
+    } finally {
+      setGenerating(false);
+    }
   };
 
   const getStudentScore = (studentId: string) => {
@@ -1144,7 +1146,15 @@ function ScoreManagementView({
             📊 {asmts.length} assessments in database · {students.length} students in class
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={generateMissingAssessments}
+            disabled={generating}
+            className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
+          >
+            {generating ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+            {generating ? 'Creating...' : 'Generate Missing'}
+          </button>
           {onRefresh && (
             <button
               onClick={onRefresh}
@@ -1280,7 +1290,7 @@ function ScoreManagementView({
   );
 }
 
-// ── LOGIN COMPONENT ──────────────────────────────────────────────────────────
+// ── LOGIN ──────────────────────────────────────────────────────────────────
 function Login({ onLogin }: { onLogin: () => void }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -1404,7 +1414,6 @@ function Login({ onLogin }: { onLogin: () => void }) {
 
 // ── MAIN APP ──────────────────────────────────────────────────────────────────
 export default function App() {
-  // ── Auth state ─────────────────────────────────────────────────────────────
   const [session, setSession] = useState<any>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
@@ -1419,12 +1428,9 @@ export default function App() {
       setAuthLoading(false);
     });
 
-    return () => {
-      subscription?.unsubscribe();
-    };
+    return () => subscription?.unsubscribe();
   }, []);
 
-  // ── ALL other hooks ──────────────────────────────────────────────────────
   const [view, setView] = useState<View>("schools");
   const [school, setSchool] = useState<any | null>(null);
   const [klass, setKlass] = useState<any | null>(null);
@@ -1452,13 +1458,9 @@ export default function App() {
 
   const isRefreshing = useRef(false);
 
-  // ── Load Data from Supabase ──────────────────────────────────────────────
   const loadData = useCallback(async (showLoading = true) => {
     if (isRefreshing.current) return;
-
-    if (showLoading) {
-      setLoading(true);
-    }
+    if (showLoading) setLoading(true);
     setError(null);
 
     if (!isSupabaseAvailable()) {
@@ -1497,237 +1499,90 @@ export default function App() {
       console.log(`📊 Loaded ${assessmentsRes.data?.length || 0} assessments.`);
     } catch (err: any) {
       console.error('❌ Error loading data:', err);
-      if (showLoading) {
+      if (err.message?.includes('ERR_CONNECTION_RESET')) {
+        setError('Network error: Could not reach Supabase. Check your internet connection and try again.');
+      } else {
         setError(`Failed to load data: ${err.message}`);
       }
     } finally {
       isRefreshing.current = false;
       setRefreshing(false);
-      if (showLoading) {
-        setLoading(false);
-      }
+      if (showLoading) setLoading(false);
     }
   }, []);
 
-  // ── Initial Load ──────────────────────────────────────────────────────────
-  useEffect(() => {
-    loadData(true);
-  }, []);
+  useEffect(() => { loadData(true); }, []);
 
-  // ── Real-time Subscriptions ──────────────────────────────────────────────
+  // Real-time subscriptions (unchanged)
   useEffect(() => {
     if (!isSupabaseAvailable()) return;
-
     const channels = [
-      supabase.channel('schools_changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'schools' }, () => {
-          if (!isRefreshing.current) loadData(false);
-        })
-        .subscribe(),
-      supabase.channel('classes_changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'classes' }, () => {
-          if (!isRefreshing.current) loadData(false);
-        })
-        .subscribe(),
-      supabase.channel('students_changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'students' }, () => {
-          if (!isRefreshing.current) loadData(false);
-        })
-        .subscribe(),
-      supabase.channel('assessments_changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'assessments' }, () => {
-          if (!isRefreshing.current) loadData(false);
-        })
-        .subscribe(),
-      supabase.channel('documents_changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'documents' }, () => {
-          if (!isRefreshing.current) loadData(false);
-        })
-        .subscribe(),
+      supabase.channel('schools_changes').on('postgres_changes', { event: '*', schema: 'public', table: 'schools' }, () => { if (!isRefreshing.current) loadData(false); }).subscribe(),
+      supabase.channel('classes_changes').on('postgres_changes', { event: '*', schema: 'public', table: 'classes' }, () => { if (!isRefreshing.current) loadData(false); }).subscribe(),
+      supabase.channel('students_changes').on('postgres_changes', { event: '*', schema: 'public', table: 'students' }, () => { if (!isRefreshing.current) loadData(false); }).subscribe(),
+      supabase.channel('assessments_changes').on('postgres_changes', { event: '*', schema: 'public', table: 'assessments' }, () => { if (!isRefreshing.current) loadData(false); }).subscribe(),
+      supabase.channel('documents_changes').on('postgres_changes', { event: '*', schema: 'public', table: 'documents' }, () => { if (!isRefreshing.current) loadData(false); }).subscribe(),
     ];
-
-    const interval = setInterval(() => {
-      setIsOnline(isSupabaseAvailable());
-    }, 20000);
-
-    return () => {
-      channels.forEach(ch => ch.unsubscribe());
-      clearInterval(interval);
-    };
+    const interval = setInterval(() => setIsOnline(isSupabaseAvailable()), 20000);
+    return () => { channels.forEach(ch => ch.unsubscribe()); clearInterval(interval); };
   }, [loadData]);
 
   // ── CRUD Operations ──────────────────────────────────────────────────────
-
   const addSchool = async (newSchool: any) => {
-    if (!isSupabaseAvailable()) {
-      setError('Cannot save: Database not available');
-      return;
-    }
-    try {
-      const { error } = await supabase.from('schools').insert([newSchool]);
-      if (error) throw error;
-      await loadData(false);
-    } catch (err: any) {
-      console.error('Error adding school:', err);
-      setError(`Failed to save school: ${err.message}`);
-    }
+    if (!isSupabaseAvailable()) { setError('Cannot save: Database not available'); return; }
+    try { const { error } = await supabase.from('schools').insert([newSchool]); if (error) throw error; await loadData(false); } catch (err: any) { console.error(err); setError(`Failed to save school: ${err.message}`); }
   };
-
   const editSchool = async (updated: any) => {
-    if (!isSupabaseAvailable()) {
-      setError('Cannot update: Database not available');
-      return;
-    }
-    try {
-      const { error } = await supabase.from('schools').update(updated).eq('id', updated.id);
-      if (error) throw error;
-      await loadData(false);
-    } catch (err: any) {
-      console.error('Error updating school:', err);
-      setError(`Failed to update school: ${err.message}`);
-    }
+    if (!isSupabaseAvailable()) { setError('Cannot update: Database not available'); return; }
+    try { const { error } = await supabase.from('schools').update(updated).eq('id', updated.id); if (error) throw error; await loadData(false); } catch (err: any) { console.error(err); setError(`Failed to update school: ${err.message}`); }
   };
-
   const delSchool = async (id: string) => {
-    if (!isSupabaseAvailable()) {
-      setError('Cannot delete: Database not available');
-      return;
-    }
-    try {
-      const { error } = await supabase.from('schools').delete().eq('id', id);
-      if (error) throw error;
-      await loadData(false);
-    } catch (err: any) {
-      console.error('Error deleting school:', err);
-      setError(`Failed to delete school: ${err.message}`);
-    }
+    if (!isSupabaseAvailable()) { setError('Cannot delete: Database not available'); return; }
+    try { const { error } = await supabase.from('schools').delete().eq('id', id); if (error) throw error; await loadData(false); } catch (err: any) { console.error(err); setError(`Failed to delete school: ${err.message}`); }
   };
-
   const addKlass = async (newKlass: any) => {
-    if (!isSupabaseAvailable()) {
-      setError('Cannot save: Database not available');
-      return;
-    }
-    try {
-      const { error } = await supabase.from('classes').insert([newKlass]);
-      if (error) throw error;
-      await loadData(false);
-    } catch (err: any) {
-      console.error('Error adding class:', err);
-      setError(`Failed to save class: ${err.message}`);
-    }
+    if (!isSupabaseAvailable()) { setError('Cannot save: Database not available'); return; }
+    try { const { error } = await supabase.from('classes').insert([newKlass]); if (error) throw error; await loadData(false); } catch (err: any) { console.error(err); setError(`Failed to save class: ${err.message}`); }
   };
-
   const editKlass = async (updated: any) => {
-    if (!isSupabaseAvailable()) {
-      setError('Cannot update: Database not available');
-      return;
-    }
-    try {
-      const { error } = await supabase.from('classes').update(updated).eq('id', updated.id);
-      if (error) throw error;
-      await loadData(false);
-    } catch (err: any) {
-      console.error('Error updating class:', err);
-      setError(`Failed to update class: ${err.message}`);
-    }
+    if (!isSupabaseAvailable()) { setError('Cannot update: Database not available'); return; }
+    try { const { error } = await supabase.from('classes').update(updated).eq('id', updated.id); if (error) throw error; await loadData(false); } catch (err: any) { console.error(err); setError(`Failed to update class: ${err.message}`); }
   };
-
   const delKlass = async (id: string) => {
-    if (!isSupabaseAvailable()) {
-      setError('Cannot delete: Database not available');
-      return;
-    }
-    try {
-      const { error } = await supabase.from('classes').delete().eq('id', id);
-      if (error) throw error;
-      await loadData(false);
-    } catch (err: any) {
-      console.error('Error deleting class:', err);
-      setError(`Failed to delete class: ${err.message}`);
-    }
+    if (!isSupabaseAvailable()) { setError('Cannot delete: Database not available'); return; }
+    try { const { error } = await supabase.from('classes').delete().eq('id', id); if (error) throw error; await loadData(false); } catch (err: any) { console.error(err); setError(`Failed to delete class: ${err.message}`); }
   };
-
   const addStudent = async (newStudent: any) => {
-    if (!isSupabaseAvailable()) {
-      setError('Cannot save: Database not available');
-      return;
-    }
+    if (!isSupabaseAvailable()) { setError('Cannot save: Database not available'); return; }
     try {
       const { error } = await supabase.from('students').insert([newStudent]);
       if (error) throw error;
-
       const year = klasses.find((k: any) => k.id === newStudent.class_id)?.academic_year || CURRENT_YEAR;
       const newAsmts: any[] = [];
       for (const term of [1, 2, 3] as Term[])
         for (const type of ATYPES)
           newAsmts.push({ id: uid(), student_id: newStudent.id, term, type, score: 0, max_score: AMAX[type], year });
-
       const { error: asmtError } = await supabase.from('assessments').insert(newAsmts);
       if (asmtError) throw asmtError;
       await loadData(false);
-    } catch (err: any) {
-      console.error('Error adding student:', err);
-      setError(`Failed to save student: ${err.message}`);
-    }
+    } catch (err: any) { console.error(err); setError(`Failed to save student: ${err.message}`); }
   };
-
   const editStudent = async (updated: any) => {
-    if (!isSupabaseAvailable()) {
-      setError('Cannot update: Database not available');
-      return;
-    }
-    try {
-      const { error } = await supabase.from('students').update(updated).eq('id', updated.id);
-      if (error) throw error;
-      await loadData(false);
-    } catch (err: any) {
-      console.error('Error updating student:', err);
-      setError(`Failed to update student: ${err.message}`);
-    }
+    if (!isSupabaseAvailable()) { setError('Cannot update: Database not available'); return; }
+    try { const { error } = await supabase.from('students').update(updated).eq('id', updated.id); if (error) throw error; await loadData(false); } catch (err: any) { console.error(err); setError(`Failed to update student: ${err.message}`); }
   };
-
   const delStudent = async (id: string) => {
-    if (!isSupabaseAvailable()) {
-      setError('Cannot delete: Database not available');
-      return;
-    }
-    try {
-      const { error } = await supabase.from('students').delete().eq('id', id);
-      if (error) throw error;
-      await loadData(false);
-    } catch (err: any) {
-      console.error('Error deleting student:', err);
-      setError(`Failed to delete student: ${err.message}`);
-    }
+    if (!isSupabaseAvailable()) { setError('Cannot delete: Database not available'); return; }
+    try { const { error } = await supabase.from('students').delete().eq('id', id); if (error) throw error; await loadData(false); } catch (err: any) { console.error(err); setError(`Failed to delete student: ${err.message}`); }
   };
-
   const updateScore = async (id: string, score: number) => {
-    if (!isSupabaseAvailable()) {
-      setError('Cannot update: Database not available');
-      return;
-    }
+    if (!isSupabaseAvailable()) { setError('Cannot update: Database not available'); return; }
     try {
       console.log(`📝 Updating assessment ${id} to score ${score}`);
-      const { error, data } = await supabase
-        .from('assessments')
-        .update({ score })
-        .eq('id', id)
-        .select();
-
-      if (error) {
-        console.error('❌ Supabase update error:', error);
-        throw error;
-      }
-
+      const { error, data } = await supabase.from('assessments').update({ score }).eq('id', id).select();
+      if (error) throw error;
       console.log('✅ Score updated successfully:', data);
-
-      // Update local state optimistically
-      setAsmts(prev => prev.map((a: any) =>
-        a.id === id ? { ...a, score } : a
-      ));
-
-      // 🔄 Reload data to ensure UI is fully in sync
+      setAsmts(prev => prev.map((a: any) => a.id === id ? { ...a, score } : a));
       await loadData(false);
     } catch (err: any) {
       console.error('❌ Error updating score:', err);
@@ -1735,56 +1590,19 @@ export default function App() {
       throw err;
     }
   };
-
   const addDoc = async (newDoc: any) => {
-    if (!isSupabaseAvailable()) {
-      setError('Cannot save: Database not available');
-      return;
-    }
-    try {
-      const { error } = await supabase.from('documents').insert([newDoc]);
-      if (error) {
-        console.error('Supabase insert error:', error);
-        throw error;
-      }
-      await loadData(false);
-    } catch (err: any) {
-      console.error('Error adding document:', err);
-      setError(`Failed to save document: ${err.message || err.details || 'Unknown error'}`);
-    }
+    if (!isSupabaseAvailable()) { setError('Cannot save: Database not available'); return; }
+    try { const { error } = await supabase.from('documents').insert([newDoc]); if (error) throw error; await loadData(false); } catch (err: any) { console.error(err); setError(`Failed to save document: ${err.message}`); }
   };
-
   const updateDoc = async (id: string, content: string) => {
-    if (!isSupabaseAvailable()) {
-      setError('Cannot update: Database not available');
-      return;
-    }
-    try {
-      const { error } = await supabase.from('documents').update({ content }).eq('id', id);
-      if (error) throw error;
-      await loadData(false);
-    } catch (err: any) {
-      console.error('Error updating document:', err);
-      setError(`Failed to update document: ${err.message}`);
-    }
+    if (!isSupabaseAvailable()) { setError('Cannot update: Database not available'); return; }
+    try { const { error } = await supabase.from('documents').update({ content }).eq('id', id); if (error) throw error; await loadData(false); } catch (err: any) { console.error(err); setError(`Failed to update document: ${err.message}`); }
   };
-
   const delDoc = async (id: string) => {
-    if (!isSupabaseAvailable()) {
-      setError('Cannot delete: Database not available');
-      return;
-    }
-    try {
-      const { error } = await supabase.from('documents').delete().eq('id', id);
-      if (error) throw error;
-      await loadData(false);
-    } catch (err: any) {
-      console.error('Error deleting document:', err);
-      setError(`Failed to delete document: ${err.message}`);
-    }
+    if (!isSupabaseAvailable()) { setError('Cannot delete: Database not available'); return; }
+    try { const { error } = await supabase.from('documents').delete().eq('id', id); if (error) throw error; await loadData(false); } catch (err: any) { console.error(err); setError(`Failed to delete document: ${err.message}`); }
   };
 
-  // ── Navigation ──────────────────────────────────────────────────────────────
   const goSchools = () => { setView("schools"); setSchool(null); setKlass(null); setStudent(null); };
   const goClasses = (s: any) => { setSchool(s); setKlass(null); setStudent(null); setView("classes"); };
   const goStudents = (k: any) => { setKlass(k); setStudent(null); setView("students"); };
@@ -1796,41 +1614,24 @@ export default function App() {
   const klassStudents = students.filter((s: any) => s.class_id === klass?.id);
   const studentAsmts = asmts.filter((a: any) => a.student_id === student?.id);
 
-  const handleManualRefresh = () => {
-    if (!isRefreshing.current) loadData(true);
-  };
+  const handleManualRefresh = () => { if (!isRefreshing.current) loadData(true); };
+  const handleLogout = async () => { await supabase.auth.signOut(); };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-  };
-
-  // ── Conditionally render based on auth state ──────────────────────────────
   if (authLoading) {
     return (
       <div className="flex h-screen bg-background items-center justify-center">
-        <div className="text-center">
-          <Loader2 size={48} className="animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Checking session...</p>
-        </div>
+        <div className="text-center"><Loader2 size={48} className="animate-spin text-primary mx-auto mb-4" /><p className="text-muted-foreground">Checking session...</p></div>
       </div>
     );
   }
-
-  if (!session) {
-    return <Login onLogin={() => {}} />;
-  }
-
+  if (!session) return <Login onLogin={() => {}} />;
   if (loading) {
     return (
       <div className="flex h-screen bg-background items-center justify-center">
-        <div className="text-center">
-          <Loader2 size={48} className="animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading data from Supabase...</p>
-        </div>
+        <div className="text-center"><Loader2 size={48} className="animate-spin text-primary mx-auto mb-4" /><p className="text-muted-foreground">Loading data from Supabase...</p></div>
       </div>
     );
   }
-
   if (error && error.includes('Cannot connect')) {
     return (
       <div className="flex h-screen bg-background items-center justify-center">
@@ -1838,14 +1639,11 @@ export default function App() {
           <WifiOff size={56} className="text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-bold mb-2">Connection Error</h2>
           <p className="text-muted-foreground mb-6">{error}</p>
-          <button onClick={handleManualRefresh} className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 rounded-xl font-semibold hover:opacity-90 mx-auto">
-            <RefreshCw size={18} /> Retry
-          </button>
+          <button onClick={handleManualRefresh} className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 rounded-xl font-semibold hover:opacity-90 mx-auto"><RefreshCw size={18} /> Retry</button>
         </div>
       </div>
     );
   }
-
   if (error) {
     return (
       <div className="flex h-screen bg-background items-center justify-center">
@@ -1853,130 +1651,50 @@ export default function App() {
           <AlertCircle size={56} className="text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-bold mb-2">Error</h2>
           <p className="text-muted-foreground mb-6">{error}</p>
-          <button onClick={handleManualRefresh} className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 rounded-xl font-semibold hover:opacity-90 mx-auto">
-            <RefreshCw size={18} /> Retry
-          </button>
+          <button onClick={handleManualRefresh} className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 rounded-xl font-semibold hover:opacity-90 mx-auto"><RefreshCw size={18} /> Retry</button>
         </div>
       </div>
     );
   }
 
-  // ── Render Main Dashboard ──────────────────────────────────────────────────
   return (
     <div className="flex h-screen bg-background overflow-hidden">
-      {/* Connection Status Bar */}
       <div className={`fixed top-0 left-0 right-0 z-50 px-4 py-1.5 text-xs text-center font-medium flex items-center justify-between ${isOnline ? 'bg-emerald-50 text-emerald-700 border-b border-emerald-200' : 'bg-amber-50 text-amber-700 border-b border-amber-200'}`}>
-        <span className="flex items-center gap-2">
-          {isOnline ? <Wifi size={12} /> : <WifiOff size={12} />}
-          {isOnline ? 'Connected to Supabase' : 'Offline'}
-        </span>
-        <span className="flex items-center gap-2">
-          {refreshing ? (
-            <Loader2 size={14} className="animate-spin text-primary" />
-          ) : (
-            <RefreshCw size={14} className="text-muted-foreground" />
-          )}
-          {refreshing ? 'Syncing...' : 'Ready'}
-        </span>
-        <button
-          onClick={handleManualRefresh}
-          className="text-xs font-semibold hover:underline flex items-center gap-1"
-          disabled={refreshing}
-        >
-          <RefreshCw size={12} className={refreshing ? 'animate-spin' : ''} />
-          {refreshing ? 'Loading...' : 'Refresh'}
-        </button>
+        <span className="flex items-center gap-2">{isOnline ? <Wifi size={12} /> : <WifiOff size={12} />}{isOnline ? 'Connected to Supabase' : 'Offline'}</span>
+        <span className="flex items-center gap-2">{refreshing ? <Loader2 size={14} className="animate-spin text-primary" /> : <RefreshCw size={14} className="text-muted-foreground" />}{refreshing ? 'Syncing...' : 'Ready'}</span>
+        <button onClick={handleManualRefresh} className="text-xs font-semibold hover:underline flex items-center gap-1" disabled={refreshing}><RefreshCw size={12} className={refreshing ? 'animate-spin' : ''} />{refreshing ? 'Loading...' : 'Refresh'}</button>
       </div>
 
-      {/* Sidebar */}
       <aside className="w-56 bg-primary flex flex-col flex-shrink-0 shadow-xl hidden md:flex mt-8">
         <div className="px-5 py-5 border-b border-white/10">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-white/15 rounded-xl flex items-center justify-center">
-              <GraduationCap size={17} className="text-white" />
-            </div>
-            <div>
-              <span className="text-white font-bold text-sm tracking-wide">SchoolTrack</span>
-              <div className="text-white/40 text-[10px] font-mono">Academic Manager</div>
-            </div>
+            <div className="w-8 h-8 bg-white/15 rounded-xl flex items-center justify-center"><GraduationCap size={17} className="text-white" /></div>
+            <div><span className="text-white font-bold text-sm tracking-wide">SchoolTrack</span><div className="text-white/40 text-[10px] font-mono">Academic Manager</div></div>
           </div>
         </div>
-
         <nav className="flex-1 p-3 space-y-1 pt-4 overflow-y-auto">
           <p className="text-white/20 text-[10px] font-bold uppercase tracking-widest px-3 mb-2">Navigation</p>
-          <button
-            onClick={goSchools}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${view !== "docs" && view !== "scores" ? "bg-white/15 text-white" : "text-white/55 hover:text-white hover:bg-white/10"}`}
-          >
-            <Building2 size={15} /> Schools
-          </button>
-          <button
-            onClick={goDocs}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${view === "docs" ? "bg-white/15 text-white" : "text-white/55 hover:text-white hover:bg-white/10"}`}
-          >
-            <FileText size={15} /> Documents
-          </button>
+          <button onClick={goSchools} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${view !== "docs" && view !== "scores" ? "bg-white/15 text-white" : "text-white/55 hover:text-white hover:bg-white/10"}`}><Building2 size={15} /> Schools</button>
+          <button onClick={goDocs} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${view === "docs" ? "bg-white/15 text-white" : "text-white/55 hover:text-white hover:bg-white/10"}`}><FileText size={15} /> Documents</button>
         </nav>
-
         <div className="p-4 border-t border-white/10 space-y-2">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-white/40">Schools</span>
-            <span className="text-white/70 font-mono font-bold">{schools.length}</span>
-          </div>
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-white/40">Classes</span>
-            <span className="text-white/70 font-mono font-bold">{klasses.length}</span>
-          </div>
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-white/40">Students</span>
-            <span className="text-white/70 font-mono font-bold">{students.length}</span>
-          </div>
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-white/40">Documents</span>
-            <span className="text-white/70 font-mono font-bold">{docs.length}</span>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="w-full mt-3 flex items-center gap-2 justify-center text-white/60 hover:text-white hover:bg-white/10 py-2 rounded-xl text-xs font-semibold transition-colors border border-white/10"
-          >
-            <LogOut size={14} /> Logout
-          </button>
+          <div className="flex items-center justify-between text-xs"><span className="text-white/40">Schools</span><span className="text-white/70 font-mono font-bold">{schools.length}</span></div>
+          <div className="flex items-center justify-between text-xs"><span className="text-white/40">Classes</span><span className="text-white/70 font-mono font-bold">{klasses.length}</span></div>
+          <div className="flex items-center justify-between text-xs"><span className="text-white/40">Students</span><span className="text-white/70 font-mono font-bold">{students.length}</span></div>
+          <div className="flex items-center justify-between text-xs"><span className="text-white/40">Documents</span><span className="text-white/70 font-mono font-bold">{docs.length}</span></div>
+          <button onClick={handleLogout} className="w-full mt-3 flex items-center gap-2 justify-center text-white/60 hover:text-white hover:bg-white/10 py-2 rounded-xl text-xs font-semibold transition-colors border border-white/10"><LogOut size={14} /> Logout</button>
         </div>
       </aside>
 
-      {/* Mobile Bottom Navigation */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-border z-50 flex justify-around py-2">
-        <button
-          onClick={goSchools}
-          className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg text-xs ${view !== "docs" && view !== "scores" ? "text-primary" : "text-muted-foreground"}`}
-        >
-          <Building2 size={20} /> Schools
-        </button>
-        <button
-          onClick={goDocs}
-          className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg text-xs ${view === "docs" ? "text-primary" : "text-muted-foreground"}`}
-        >
-          <FileText size={20} /> Docs
-        </button>
-        <button
-          onClick={handleLogout}
-          className="flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg text-xs text-red-500"
-        >
-          <LogOut size={20} /> Logout
-        </button>
+        <button onClick={goSchools} className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg text-xs ${view !== "docs" && view !== "scores" ? "text-primary" : "text-muted-foreground"}`}><Building2 size={20} /> Schools</button>
+        <button onClick={goDocs} className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg text-xs ${view === "docs" ? "text-primary" : "text-muted-foreground"}`}><FileText size={20} /> Docs</button>
+        <button onClick={handleLogout} className="flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg text-xs text-red-500"><LogOut size={20} /> Logout</button>
       </nav>
 
-      {/* Main content – scrollable */}
       <main className="flex-1 flex flex-col min-w-0 pb-16 md:pb-0 mt-8 overflow-y-auto">
         {view === "docs" ? (
-          <DocsView
-            docs={docs}
-            schools={schools}
-            klasses={klasses}
-            onAdd={() => setShowAddDoc(true)}
-            onUpdate={updateDoc}
-            onDelete={delDoc}
-          />
+          <DocsView docs={docs} schools={schools} klasses={klasses} onAdd={() => setShowAddDoc(true)} onUpdate={updateDoc} onDelete={delDoc} />
         ) : view === "scores" && klass ? (
           <ScoreManagementView
             school={school!}
@@ -1990,75 +1708,19 @@ export default function App() {
           />
         ) : (
           <>
-            {view === "schools" && (
-              <SchoolsView
-                schools={schools}
-                onOpen={goClasses}
-                onAdd={() => setShowAddSchool(true)}
-                onDelete={delSchool}
-                onEdit={(s: any) => setEditingSchool(s)}
-              />
-            )}
-            {view === "classes" && school && (
-              <ClassesView
-                school={school}
-                klasses={schoolKlasses}
-                students={students}
-                onOpen={goStudents}
-                onAdd={() => setShowAddClass(true)}
-                onBack={goSchools}
-                onDelete={delKlass}
-                onEdit={(k: any) => setEditingClass(k)}
-                onScores={goScores}
-              />
-            )}
-            {view === "students" && school && klass && (
-              <StudentsView
-                school={school}
-                klass={klass}
-                students={klassStudents}
-                asmts={asmts}
-                onOpen={goStudent}
-                onAdd={() => setShowAddStudent(true)}
-                onBack={() => goClasses(school)}
-                onBackSchool={goSchools}
-                onDelete={delStudent}
-                onEdit={(s: any) => setEditingStudent(s)}
-              />
-            )}
-            {view === "student" && school && klass && student && (
-              <StudentDetailView
-                school={school}
-                klass={klass}
-                student={student}
-                asmts={studentAsmts}
-                onUpdateScore={updateScore}
-                onBack={() => goStudents(klass)}
-                onBackClass={() => goClasses(school)}
-                onBackSchool={goSchools}
-                onUpdateStudent={editStudent}
-              />
-            )}
+            {view === "schools" && <SchoolsView schools={schools} onOpen={goClasses} onAdd={() => setShowAddSchool(true)} onDelete={delSchool} onEdit={(s: any) => setEditingSchool(s)} />}
+            {view === "classes" && school && <ClassesView school={school} klasses={schoolKlasses} students={students} onOpen={goStudents} onAdd={() => setShowAddClass(true)} onBack={goSchools} onDelete={delKlass} onEdit={(k: any) => setEditingClass(k)} onScores={goScores} />}
+            {view === "students" && school && klass && <StudentsView school={school} klass={klass} students={klassStudents} asmts={asmts} onOpen={goStudent} onAdd={() => setShowAddStudent(true)} onBack={() => goClasses(school)} onBackSchool={goSchools} onDelete={delStudent} onEdit={(s: any) => setEditingStudent(s)} />}
+            {view === "student" && school && klass && student && <StudentDetailView school={school} klass={klass} student={student} asmts={studentAsmts} onUpdateScore={updateScore} onBack={() => goStudents(klass)} onBackClass={() => goClasses(school)} onBackSchool={goSchools} onUpdateStudent={editStudent} />}
           </>
         )}
       </main>
 
-      {/* Add Modals */}
       {showAddSchool && <AddSchoolModal onSave={addSchool} onClose={() => setShowAddSchool(false)} />}
       {showAddClass && school && <AddClassModal schoolId={school.id} onSave={addKlass} onClose={() => setShowAddClass(false)} />}
       {showAddStudent && klass && <AddStudentModal classId={klass.id} onSave={addStudent} onClose={() => setShowAddStudent(false)} />}
       {showAddDoc && <AddDocModal schools={schools} klasses={klasses} onSave={addDoc} onClose={() => setShowAddDoc(false)} />}
-      {showScoreModal && klass && (
-        <ScoreInputModal
-          klass={klass}
-          students={klassStudents}
-          asmts={asmts}
-          onSave={updateScore}
-          onClose={() => setShowScoreModal(false)}
-        />
-      )}
-
-      {/* Edit Modals */}
+      {showScoreModal && klass && <ScoreInputModal klass={klass} students={klassStudents} asmts={asmts} onSave={updateScore} onClose={() => setShowScoreModal(false)} />}
       {editingSchool && <EditSchoolModal school={editingSchool} onSave={editSchool} onClose={() => setEditingSchool(null)} />}
       {editingClass && <EditClassModal klass={editingClass} onSave={editKlass} onClose={() => setEditingClass(null)} />}
       {editingStudent && <EditStudentModal student={editingStudent} onSave={editStudent} onClose={() => setEditingStudent(null)} />}
