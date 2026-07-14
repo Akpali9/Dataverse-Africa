@@ -1443,7 +1443,7 @@ export default function App() {
   const [student, setStudent] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isOnline, setIsOnline] = useState(isSupabaseAvailable());
+  const [isOnline, setIsOnline] = useState(true); // initially true
   const [refreshing, setRefreshing] = useState(false);
 
   const [schools, setSchools] = useState<any[]>([]);
@@ -1473,6 +1473,7 @@ export default function App() {
     }
     setError(null);
     
+    // Check availability via sync function
     if (!isSupabaseAvailable()) {
       setError('Cannot connect to database. Please check your connection.');
       if (showLoading) setLoading(false);
@@ -1486,11 +1487,11 @@ export default function App() {
       setIsOnline(true);
       
       const [schoolsRes, classesRes, studentsRes, assessmentsRes, docsRes] = await Promise.all([
-        supabase!.from('schools').select('*').order('name'),
-        supabase!.from('classes').select('*').order('name'),
-        supabase!.from('students').select('*').order('last_name'),
-        supabase!.from('assessments').select('*'),
-        supabase!.from('documents').select('*').order('created_at', { ascending: false }),
+        supabase.from('schools').select('*').order('name'),
+        supabase.from('classes').select('*').order('name'),
+        supabase.from('students').select('*').order('last_name'),
+        supabase.from('assessments').select('*'),
+        supabase.from('documents').select('*').order('created_at', { ascending: false }),
       ]);
 
       if (schoolsRes.error) throw new Error(schoolsRes.error.message);
@@ -1530,27 +1531,27 @@ export default function App() {
     if (!isSupabaseAvailable()) return;
 
     const channels = [
-      supabase!.channel('schools_changes')
+      supabase.channel('schools_changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'schools' }, () => {
           if (!isRefreshing.current) loadData(false);
         })
         .subscribe(),
-      supabase!.channel('classes_changes')
+      supabase.channel('classes_changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'classes' }, () => {
           if (!isRefreshing.current) loadData(false);
         })
         .subscribe(),
-      supabase!.channel('students_changes')
+      supabase.channel('students_changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'students' }, () => {
           if (!isRefreshing.current) loadData(false);
         })
         .subscribe(),
-      supabase!.channel('assessments_changes')
+      supabase.channel('assessments_changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'assessments' }, () => {
           if (!isRefreshing.current) loadData(false);
         })
         .subscribe(),
-      supabase!.channel('documents_changes')
+      supabase.channel('documents_changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'documents' }, () => {
           if (!isRefreshing.current) loadData(false);
         })
@@ -1575,7 +1576,7 @@ export default function App() {
       return;
     }
     try {
-      const { error } = await supabase!.from('schools').insert([newSchool]);
+      const { error } = await supabase.from('schools').insert([newSchool]);
       if (error) throw error;
       await loadData(false);
     } catch (err: any) {
@@ -1590,7 +1591,7 @@ export default function App() {
       return;
     }
     try {
-      const { error } = await supabase!.from('schools').update(updated).eq('id', updated.id);
+      const { error } = await supabase.from('schools').update(updated).eq('id', updated.id);
       if (error) throw error;
       await loadData(false);
     } catch (err: any) {
@@ -1605,7 +1606,7 @@ export default function App() {
       return;
     }
     try {
-      const { error } = await supabase!.from('schools').delete().eq('id', id);
+      const { error } = await supabase.from('schools').delete().eq('id', id);
       if (error) throw error;
       await loadData(false);
     } catch (err: any) {
@@ -1620,7 +1621,7 @@ export default function App() {
       return;
     }
     try {
-      const { error } = await supabase!.from('classes').insert([newKlass]);
+      const { error } = await supabase.from('classes').insert([newKlass]);
       if (error) throw error;
       await loadData(false);
     } catch (err: any) {
@@ -1635,7 +1636,7 @@ export default function App() {
       return;
     }
     try {
-      const { error } = await supabase!.from('classes').update(updated).eq('id', updated.id);
+      const { error } = await supabase.from('classes').update(updated).eq('id', updated.id);
       if (error) throw error;
       await loadData(false);
     } catch (err: any) {
@@ -1650,7 +1651,7 @@ export default function App() {
       return;
     }
     try {
-      const { error } = await supabase!.from('classes').delete().eq('id', id);
+      const { error } = await supabase.from('classes').delete().eq('id', id);
       if (error) throw error;
       await loadData(false);
     } catch (err: any) {
@@ -1665,7 +1666,7 @@ export default function App() {
       return;
     }
     try {
-      const { error } = await supabase!.from('students').insert([newStudent]);
+      const { error } = await supabase.from('students').insert([newStudent]);
       if (error) throw error;
 
       const year = klasses.find((k: any) => k.id === newStudent.class_id)?.academic_year || CURRENT_YEAR;
@@ -1674,7 +1675,7 @@ export default function App() {
         for (const type of ATYPES)
           newAsmts.push({ id: uid(), student_id: newStudent.id, term, type, score: 0, max_score: AMAX[type], year });
       
-      const { error: asmtError } = await supabase!.from('assessments').insert(newAsmts);
+      const { error: asmtError } = await supabase.from('assessments').insert(newAsmts);
       if (asmtError) throw asmtError;
       await loadData(false);
     } catch (err: any) {
@@ -1689,7 +1690,7 @@ export default function App() {
       return;
     }
     try {
-      const { error } = await supabase!.from('students').update(updated).eq('id', updated.id);
+      const { error } = await supabase.from('students').update(updated).eq('id', updated.id);
       if (error) throw error;
       await loadData(false);
     } catch (err: any) {
@@ -1704,7 +1705,7 @@ export default function App() {
       return;
     }
     try {
-      const { error } = await supabase!.from('students').delete().eq('id', id);
+      const { error } = await supabase.from('students').delete().eq('id', id);
       if (error) throw error;
       await loadData(false);
     } catch (err: any) {
@@ -1719,7 +1720,7 @@ export default function App() {
       return;
     }
     try {
-      const { error } = await supabase!.from('assessments').update({ score }).eq('id', id);
+      const { error } = await supabase.from('assessments').update({ score }).eq('id', id);
       if (error) throw error;
       
       setAsmts(prev => prev.map((a: any) => 
@@ -1739,7 +1740,7 @@ export default function App() {
       return;
     }
     try {
-      const { error } = await supabase!.from('documents').insert([newDoc]);
+      const { error } = await supabase.from('documents').insert([newDoc]);
       if (error) {
         console.error('Supabase insert error:', error);
         throw error;
@@ -1757,7 +1758,7 @@ export default function App() {
       return;
     }
     try {
-      const { error } = await supabase!.from('documents').update({ content }).eq('id', id);
+      const { error } = await supabase.from('documents').update({ content }).eq('id', id);
       if (error) throw error;
       await loadData(false);
     } catch (err: any) {
@@ -1772,7 +1773,7 @@ export default function App() {
       return;
     }
     try {
-      const { error } = await supabase!.from('documents').delete().eq('id', id);
+      const { error } = await supabase.from('documents').delete().eq('id', id);
       if (error) throw error;
       await loadData(false);
     } catch (err: any) {
