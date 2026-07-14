@@ -53,12 +53,12 @@ const AMAX: Record<AType, number> = { test1: 20, test2: 20, assignment: 10, proj
 const ATYPES: AType[] = ["test1", "test2", "assignment", "project", "exam"];
 
 const GRADE_COLORS: Record<Grade, string> = {
-  "A+": "text-emerald-600 bg-emerald-50",
-  "A": "text-emerald-600 bg-emerald-50",
-  "B": "text-blue-600 bg-blue-50",
-  "C": "text-amber-600 bg-amber-50",
-  "D": "text-orange-600 bg-orange-50",
-  "F": "text-red-600 bg-red-50",
+  "A+": "text-emerald-700 bg-emerald-50",
+  "A": "text-emerald-700 bg-emerald-50",
+  "B": "text-blue-700 bg-blue-50",
+  "C": "text-amber-700 bg-amber-50",
+  "D": "text-orange-700 bg-orange-50",
+  "F": "text-red-700 bg-red-50",
 };
 
 // ── Utils ──────────────────────────────────────────────────────────────────────
@@ -938,7 +938,7 @@ function DocsView({ docs, schools, klasses, onAdd, onUpdate, onDelete }: {
   );
 }
 
-// ── SCORE MANAGEMENT VIEW (with Generate Missing) ──────────────────────────
+// ── SCORE MANAGEMENT VIEW (with autosave) ──────────────────────────────────
 function ScoreManagementView({
   school,
   klass,
@@ -968,6 +968,7 @@ function ScoreManagementView({
   const [generating, setGenerating] = useState(false);
 
   const maxScore = AMAX[selectedType];
+  const debounceTimers = useRef<Record<string, NodeJS.Timeout>>({});
 
   useEffect(() => {
     setLoading(true);
@@ -996,66 +997,67 @@ function ScoreManagementView({
     }
   }, [students, asmts, selectedTerm, selectedType, klass.academic_year]);
 
-  const handleScoreChange = (studentId: string, value: string) => {
-    setEditingScores(prev => ({ ...prev, [studentId]: value }));
-    setSaveSuccess(prev => ({ ...prev, [studentId]: false }));
-  };
+  const performSave = async (studentId: string, value: string) => {
+    if (!value || value === "") return;
+    const score = parseFloat(value);
+    if (isNaN(score) || score < 0 || score > maxScore) return;
 
-  const handleSaveScore = async (studentId: string) => {
-    const value = editingScores[studentId];
-    if (value && value !== "") {
-      const score = parseFloat(value);
-      if (!isNaN(score) && score >= 0 && score <= maxScore) {
-        setSaving(prev => ({ ...prev, [studentId]: true }));
-        setSaveSuccess(prev => ({ ...prev, [studentId]: false }));
-        try {
-          const assessment = asmts.find((a: any) =>
-            a.student_id === studentId &&
-            a.term === selectedTerm &&
-            a.type === selectedType &&
-            a.year === klass.academic_year
-          );
-          if (assessment) {
-            await onUpdateScore(assessment.id, Math.round(score));
-            setSaveSuccess(prev => ({ ...prev, [studentId]: true }));
-            if (onRefresh) onRefresh();
-          } else {
-            alert(`No assessment record found for this student. Please use "Generate Missing" first.`);
-          }
-        } catch (error) {
-          console.error('Error saving score:', error);
-          setSaveSuccess(prev => ({ ...prev, [studentId]: false }));
-        } finally {
-          setSaving(prev => ({ ...prev, [studentId]: false }));
-          setTimeout(() => {
-            setSaveSuccess(prev => ({ ...prev, [studentId]: false }));
-          }, 2000);
-        }
+    setSaving(prev => ({ ...prev, [studentId]: true }));
+    setSaveSuccess(prev => ({ ...prev, [studentId]: false }));
+
+    try {
+      const assessment = asmts.find((a: any) =>
+        a.student_id === studentId &&
+        a.term === selectedTerm &&
+        a.type === selectedType &&
+        a.year === klass.academic_year
+      );
+      if (assessment) {
+        await onUpdateScore(assessment.id, Math.round(score));
+        setSaveSuccess(prev => ({ ...prev, [studentId]: true }));
+        setEditingScores(prev => ({ ...prev, [studentId]: String(Math.round(score)) }));
+      } else {
+        console.warn('No assessment found for student', studentId);
       }
+    } catch (err) {
+      console.error('Autosave error:', err);
+      setSaveSuccess(prev => ({ ...prev, [studentId]: false }));
+    } finally {
+      setSaving(prev => ({ ...prev, [studentId]: false }));
+      setTimeout(() => {
+        setSaveSuccess(prev => ({ ...prev, [studentId]: false }));
+      }, 2000);
     }
   };
 
-  const handleSaveAll = async () => {
-    const savePromises = students.map((student: any) => {
-      const value = editingScores[student.id];
-      if (value && value !== "") {
-        const score = parseFloat(value);
-        if (!isNaN(score) && score >= 0 && score <= maxScore) {
-          const assessment = asmts.find((a: any) =>
-            a.student_id === student.id &&
-            a.term === selectedTerm &&
-            a.type === selectedType &&
-            a.year === klass.academic_year
-          );
-          if (assessment) {
-            return onUpdateScore(assessment.id, Math.round(score));
-          }
-        }
+  const handleScoreChange = (studentId: string, value: string) => {
+    setEditingScores(prev => ({ ...prev, [studentId]: value }));
+    setSaveSuccess(prev => ({ ...prev, [studentId]: false }));
+
+    if (debounceTimers.current[studentId]) {
+      clearTimeout(debounceTimers.current[studentId]);
+    }
+
+    if (!value || value === "") return;
+    const num = parseFloat(value);
+    if (isNaN(num) || num < 0 || num > maxScore) return;
+
+    debounceTimers.current[studentId] = setTimeout(() => {
+      performSave(studentId, value);
+    }, 800);
+  };
+
+  const handleBlur = (studentId: string, value: string) => {
+    if (debounceTimers.current[studentId]) {
+      clearTimeout(debounceTimers.current[studentId]);
+      delete debounceTimers.current[studentId];
+    }
+    if (value && value !== "") {
+      const num = parseFloat(value);
+      if (!isNaN(num) && num >= 0 && num <= maxScore) {
+        performSave(studentId, value);
       }
-      return Promise.resolve();
-    });
-    await Promise.all(savePromises);
-    if (onRefresh) onRefresh();
+    }
   };
 
   const generateMissingAssessments = async () => {
@@ -1090,7 +1092,6 @@ function ScoreManagementView({
         created_at: today()
       }));
 
-      // Insert in batches
       const batchSize = 100;
       for (let i = 0; i < newAssessments.length; i += batchSize) {
         const batch = newAssessments.slice(i, i + batchSize);
@@ -1106,6 +1107,29 @@ function ScoreManagementView({
     } finally {
       setGenerating(false);
     }
+  };
+
+  const handleSaveAll = async () => {
+    const savePromises = students.map((student: any) => {
+      const value = editingScores[student.id];
+      if (value && value !== "") {
+        const score = parseFloat(value);
+        if (!isNaN(score) && score >= 0 && score <= maxScore) {
+          const assessment = asmts.find((a: any) =>
+            a.student_id === student.id &&
+            a.term === selectedTerm &&
+            a.type === selectedType &&
+            a.year === klass.academic_year
+          );
+          if (assessment) {
+            return onUpdateScore(assessment.id, Math.round(score));
+          }
+        }
+      }
+      return Promise.resolve();
+    });
+    await Promise.all(savePromises);
+    if (onRefresh) onRefresh();
   };
 
   const getStudentScore = (studentId: string) => {
@@ -1214,17 +1238,17 @@ function ScoreManagementView({
                 <th className="text-left px-4 sm:px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Score</th>
                 <th className="text-left px-4 sm:px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Grade</th>
                 <th className="text-left px-4 sm:px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">%</th>
-                <th className="text-left px-4 sm:px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Actions</th>
+                <th className="text-left px-4 sm:px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {students.map((student: any, index: number) => {
                 const assessment = getStudentScore(student.id);
-                const scoreVal = parseFloat(editingScores[student.id] || "0");
+                const currentScore = editingScores[student.id] || "";
+                const scoreVal = parseFloat(currentScore || "0");
                 const isValid = !isNaN(scoreVal) && scoreVal >= 0 && scoreVal <= maxScore;
                 const grade = isValid ? gradeStr(scoreVal, maxScore) : "N/A";
                 const percentage = isValid ? pct(scoreVal, maxScore) : 0;
-                const currentScore = editingScores[student.id] || "";
                 const isSaving = saving[student.id] || false;
                 const isSuccess = saveSuccess[student.id] || false;
 
@@ -1245,6 +1269,7 @@ function ScoreManagementView({
                           max={maxScore}
                           value={currentScore}
                           onChange={(e) => handleScoreChange(student.id, e.target.value)}
+                          onBlur={(e) => handleBlur(student.id, e.target.value)}
                           className="w-24 border border-border rounded-lg px-3 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/20"
                           placeholder="-"
                         />
@@ -1252,7 +1277,7 @@ function ScoreManagementView({
                       </div>
                     </td>
                     <td className="px-4 sm:px-6 py-4">
-                      {currentScore && currentScore !== "" && (
+                      {currentScore && currentScore !== "" && isValid && (
                         <span className={`text-sm font-bold px-2.5 py-1 rounded-full ${GRADE_COLORS[grade as Grade] || "bg-gray-100 text-gray-600"}`}>
                           {grade}
                         </span>
@@ -1266,18 +1291,10 @@ function ScoreManagementView({
                       )}
                     </td>
                     <td className="px-4 sm:px-6 py-4">
-                      <button
-                        onClick={() => handleSaveScore(student.id)}
-                        disabled={!currentScore || currentScore === "" || isSaving || !assessment}
-                        className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1 ${
-                          isSuccess
-                            ? 'bg-emerald-50 text-emerald-700'
-                            : 'bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground'
-                        } disabled:opacity-50 disabled:cursor-not-allowed`}
-                      >
-                        {isSaving ? <Loader2 size={12} className="animate-spin" /> : isSuccess ? <Check size={12} /> : <SaveIcon size={12} />}
-                        {isSaving ? 'Saving...' : isSuccess ? 'Saved!' : assessment ? 'Save' : 'No record'}
-                      </button>
+                      <span className="text-xs flex items-center gap-1">
+                        {isSaving ? <Loader2 size={12} className="animate-spin" /> : isSuccess ? <Check size={12} className="text-emerald-600" /> : null}
+                        {isSaving ? 'Saving...' : isSuccess ? 'Saved' : ''}
+                      </span>
                     </td>
                   </tr>
                 );
@@ -1513,7 +1530,6 @@ export default function App() {
 
   useEffect(() => { loadData(true); }, []);
 
-  // Real-time subscriptions (unchanged)
   useEffect(() => {
     if (!isSupabaseAvailable()) return;
     const channels = [
@@ -1527,7 +1543,6 @@ export default function App() {
     return () => { channels.forEach(ch => ch.unsubscribe()); clearInterval(interval); };
   }, [loadData]);
 
-  // ── CRUD Operations ──────────────────────────────────────────────────────
   const addSchool = async (newSchool: any) => {
     if (!isSupabaseAvailable()) { setError('Cannot save: Database not available'); return; }
     try { const { error } = await supabase.from('schools').insert([newSchool]); if (error) throw error; await loadData(false); } catch (err: any) { console.error(err); setError(`Failed to save school: ${err.message}`); }
