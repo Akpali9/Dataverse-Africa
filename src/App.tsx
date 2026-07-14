@@ -11,7 +11,7 @@ import { supabase, isSupabaseAvailable } from './lib/supabase';
 // ── Types ─────────────────────────────────────────────────────────────────────
 type View = "schools" | "classes" | "students" | "student" | "docs" | "scores";
 type Term = 1 | 2 | 3;
-type AType = "test1" | "test2" | "assignment " | "project" | "exam";
+type AType = "test1" | "test2" | "assignment" | "project" | "exam";  // ✅ No trailing space
 type Grade = "A+" | "A" | "B" | "C" | "D" | "F";
 
 interface School {
@@ -45,18 +45,18 @@ const TL: Record<Term, string> = { 1: "First Term", 2: "Second Term", 3: "Third 
 const AL: Record<AType, string> = { 
   test1: "Test 1", 
   test2: "Test 2", 
-  "assignment ": "Assignment", 
+  assignment: "Assignment", 
   project: "Project", 
   exam: "Final Exam" 
 };
 const AMAX: Record<AType, number> = { 
   test1: 20, 
   test2: 20, 
-  "assignment ": 10, 
+  assignment: 10, 
   project: 10, 
   exam: 60 
 };
-const ATYPES: AType[] = ["test1", "test2", "assignment ", "project", "exam"];
+const ATYPES: AType[] = ["test1", "test2", "assignment", "project", "exam"];
 
 const GRADE_COLORS: Record<Grade, string> = {
   "A+": "text-emerald-700 bg-emerald-50",
@@ -945,7 +945,7 @@ function DocsView({ docs, schools, klasses, onAdd, onUpdate, onDelete }: {
   );
 }
 
-// ── SCORE MANAGEMENT VIEW (with debug panel and fix) ─────────────────────────
+// ── SCORE MANAGEMENT VIEW (with debug panel) ────────────────────────────────
 
 function ScoreManagementView({
   school,
