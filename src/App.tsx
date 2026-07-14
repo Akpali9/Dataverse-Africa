@@ -147,15 +147,13 @@ function Avatar({ student, size = "md", editable = false, onUpload }: {
 }
 
 // ── MODALS ──────────────────────────────────────────────────────────────────
-
+// (All modals are unchanged – they're identical to your previous version)
 function AddSchoolModal({ onSave, onClose }: { onSave: (school: any) => Promise<void>; onClose: () => void }) {
   const [form, setForm] = useState({ name: "", address: "", principal: "", email: "", phone: "", color: "#6366f1" });
-
   const handleSubmit = async () => {
     await onSave({ ...form, id: uid(), created_at: today() });
     onClose();
   };
-
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
@@ -182,12 +180,10 @@ function AddSchoolModal({ onSave, onClose }: { onSave: (school: any) => Promise<
 
 function EditSchoolModal({ school, onSave, onClose }: { school: School; onSave: (school: any) => Promise<void>; onClose: () => void }) {
   const [form, setForm] = useState(school);
-
   const handleSubmit = async () => {
     await onSave(form);
     onClose();
   };
-
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
@@ -214,12 +210,10 @@ function EditSchoolModal({ school, onSave, onClose }: { school: School; onSave: 
 
 function AddClassModal({ schoolId, onSave, onClose }: { schoolId: string; onSave: (klass: any) => Promise<void>; onClose: () => void }) {
   const [form, setForm] = useState({ name: "", teacher: "", subject: "", academic_year: CURRENT_YEAR });
-
   const handleSubmit = async () => {
     await onSave({ ...form, id: uid(), school_id: schoolId, created_at: today() });
     onClose();
   };
-
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
@@ -244,12 +238,10 @@ function AddClassModal({ schoolId, onSave, onClose }: { schoolId: string; onSave
 
 function EditClassModal({ klass, onSave, onClose }: { klass: Klass; onSave: (klass: any) => Promise<void>; onClose: () => void }) {
   const [form, setForm] = useState(klass);
-
   const handleSubmit = async () => {
     await onSave(form);
     onClose();
   };
-
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
@@ -274,12 +266,10 @@ function EditClassModal({ klass, onSave, onClose }: { klass: Klass; onSave: (kla
 
 function AddStudentModal({ classId, onSave, onClose }: { classId: string; onSave: (student: any) => Promise<void>; onClose: () => void }) {
   const [form, setForm] = useState({ first_name: "", last_name: "", email: "", github: "", phone: "", address: "", date_of_birth: "", guardian_name: "", guardian_phone: "" });
-
   const handleSubmit = async () => {
     await onSave({ ...form, id: uid(), class_id: classId, created_at: today() });
     onClose();
   };
-
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
@@ -311,12 +301,10 @@ function AddStudentModal({ classId, onSave, onClose }: { classId: string; onSave
 
 function EditStudentModal({ student, onSave, onClose }: { student: Student; onSave: (student: any) => Promise<void>; onClose: () => void }) {
   const [form, setForm] = useState(student);
-
   const handleSubmit = async () => {
     await onSave(form);
     onClose();
   };
-
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
@@ -347,21 +335,11 @@ function EditStudentModal({ student, onSave, onClose }: { student: Student; onSa
 }
 
 function AddDocModal({ schools, klasses, onSave, onClose }: { schools: School[]; klasses: Klass[]; onSave: (doc: any) => Promise<void>; onClose: () => void }) {
-  const [form, setForm] = useState({ 
-    school_id: "", 
-    class_id: null as string | null, 
-    term: 1 as Term, 
-    type: "test1" as AType, 
-    title: "", 
-    content: "", 
-    year: CURRENT_YEAR 
-  });
-
+  const [form, setForm] = useState({ school_id: "", class_id: null as string | null, term: 1 as Term, type: "test1" as AType, title: "", content: "", year: CURRENT_YEAR });
   const handleSubmit = async () => {
     await onSave({ ...form, id: uid(), created_at: today() });
     onClose();
   };
-
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
@@ -374,11 +352,7 @@ function AddDocModal({ schools, klasses, onSave, onClose }: { schools: School[];
             <option value="">Select school</option>
             {schools.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
-          <select 
-            value={form.class_id ?? ""} 
-            onChange={(e) => setForm({ ...form, class_id: e.target.value || null })}
-            className={inputCls}
-          >
+          <select value={form.class_id ?? ""} onChange={(e) => setForm({ ...form, class_id: e.target.value || null })} className={inputCls}>
             <option value="">General (no class)</option>
             {klasses.filter((k: any) => k.school_id === form.school_id).map((k: any) => <option key={k.id} value={k.id}>{k.name}</option>)}
           </select>
@@ -501,14 +475,10 @@ function SchoolsView({ schools, onOpen, onAdd, onDelete, onEdit }: {
           <h1 className="text-2xl font-bold tracking-tight">Schools</h1>
           <p className="text-sm text-muted-foreground">Manage all registered schools</p>
         </div>
-        <button
-          onClick={onAdd}
-          className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity shadow-sm"
-        >
+        <button onClick={onAdd} className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity shadow-sm">
           <Plus size={18} /> Add School
         </button>
       </div>
-
       {schools.length === 0 ? (
         <div className="text-center py-16 bg-card rounded-2xl border border-border">
           <Building2 size={48} className="text-muted-foreground/40 mx-auto mb-4" />
@@ -542,10 +512,7 @@ function SchoolsView({ schools, onOpen, onAdd, onDelete, onEdit }: {
                 <p>{school.address}</p>
                 <p>{school.email} · {school.phone}</p>
               </div>
-              <button
-                onClick={() => onOpen(school)}
-                className="mt-4 w-full flex items-center justify-between bg-muted/50 hover:bg-muted rounded-xl px-4 py-2.5 text-sm transition-colors"
-              >
+              <button onClick={() => onOpen(school)} className="mt-4 w-full flex items-center justify-between bg-muted/50 hover:bg-muted rounded-xl px-4 py-2.5 text-sm transition-colors">
                 <span className="font-medium">View Classes</span>
                 <ChevronRight size={16} />
               </button>
@@ -575,7 +542,6 @@ function ClassesView({ school, klasses, students, onOpen, onAdd, onBack, onDelet
         <ChevronRight size={14} className="flex-shrink-0" />
         <span className="text-foreground font-semibold truncate">{school.name}</span>
       </nav>
-
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Classes</h1>
@@ -585,7 +551,6 @@ function ClassesView({ school, klasses, students, onOpen, onAdd, onBack, onDelet
           <Plus size={18} /> Add Class
         </button>
       </div>
-
       {klasses.length === 0 ? (
         <div className="text-center py-16 bg-card rounded-2xl border border-border">
           <BookOpen size={48} className="text-muted-foreground/40 mx-auto mb-4" />
@@ -654,7 +619,6 @@ function StudentsView({ school, klass, students, asmts, onOpen, onAdd, onBack, o
         <ChevronRight size={14} className="flex-shrink-0" />
         <span className="text-foreground font-semibold truncate">{klass.name}</span>
       </nav>
-
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Students</h1>
@@ -664,7 +628,6 @@ function StudentsView({ school, klass, students, asmts, onOpen, onAdd, onBack, o
           <Plus size={18} /> Add Student
         </button>
       </div>
-
       {students.length === 0 ? (
         <div className="text-center py-16 bg-card rounded-2xl border border-border">
           <Users size={48} className="text-muted-foreground/40 mx-auto mb-4" />
@@ -696,10 +659,7 @@ function StudentsView({ school, klass, students, asmts, onOpen, onAdd, onBack, o
                       </div>
                     </div>
                     {student.github && (
-                      <a
-                        href={normalizeUrl(student.github)}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-white bg-[#24292e] hover:bg-[#1b1f23] rounded-full transition-colors"
-                      >
+                      <a href={normalizeUrl(student.github)} className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-white bg-[#24292e] hover:bg-[#1b1f23] rounded-full transition-colors">
                         <Github size={12} /> GitHub
                       </a>
                     )}
@@ -809,10 +769,7 @@ function StudentDetailView({ school, klass, student, asmts, onUpdateScore, onBac
                     <h1 className="text-2xl font-bold">{student.first_name} {student.last_name}</h1>
                     <p className="text-sm text-muted-foreground">{student.email}</p>
                     {student.github && (
-                      <a
-                        href={normalizeUrl(student.github)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-[#24292e] hover:bg-[#1b1f23] rounded-full transition-colors mt-1"
-                      >
+                      <a href={normalizeUrl(student.github)} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-[#24292e] hover:bg-[#1b1f23] rounded-full transition-colors mt-1">
                         <Github size={14} /> GitHub Profile
                       </a>
                     )}
@@ -1009,22 +966,24 @@ function DocsView({ docs, schools, klasses, onAdd, onUpdate, onDelete }: {
   );
 }
 
-function ScoreManagementView({ 
-  school, 
-  klass, 
-  students, 
-  asmts, 
+function ScoreManagementView({
+  school,
+  klass,
+  students,
+  asmts,
   onUpdateScore,
   onBack,
-  onBackSchool
-}: { 
-  school: any; 
-  klass: any; 
-  students: any[]; 
-  asmts: any[]; 
+  onBackSchool,
+  onRefresh // Added this prop to allow manual refresh
+}: {
+  school: any;
+  klass: any;
+  students: any[];
+  asmts: any[];
   onUpdateScore: (id: string, score: number) => Promise<void>;
   onBack: () => void;
   onBackSchool: () => void;
+  onRefresh?: () => void;
 }) {
   const [selectedTerm, setSelectedTerm] = useState<Term>(1);
   const [selectedType, setSelectedType] = useState<AType>("test1");
@@ -1038,12 +997,32 @@ function ScoreManagementView({
 
   useEffect(() => {
     setLoading(true);
+
+    // 🔍 DEBUG: Log what we're looking for
+    console.log('🔍 ScoreManagementView filtering for:', {
+      term: selectedTerm,
+      type: selectedType,
+      year: klass.academic_year,
+      studentIds: students.map(s => s.id)
+    });
+    console.log('📋 All assessments (sample):', asmts.slice(0, 5));
+    console.log('📊 Total assessments:', asmts.length);
+
+    // Find matching assessments
+    const matching = asmts.filter((a: any) =>
+      a.term === selectedTerm &&
+      a.type === selectedType &&
+      a.year === klass.academic_year
+    );
+    console.log('✅ Matching assessments:', matching.length, matching.map(a => ({ student_id: a.student_id, score: a.score })));
+
+    // Build the scores map
     const existingScores: Record<string, string> = {};
     let missingCount = 0;
     students.forEach((student: any) => {
-      const assessment = asmts.find((a: any) => 
-        a.student_id === student.id && 
-        a.term === selectedTerm && 
+      const assessment = asmts.find((a: any) =>
+        a.student_id === student.id &&
+        a.term === selectedTerm &&
         a.type === selectedType &&
         a.year === klass.academic_year
       );
@@ -1056,8 +1035,10 @@ function ScoreManagementView({
     });
     setEditingScores(existingScores);
     setLoading(false);
+
     if (missingCount > 0) {
       setDebugInfo(`⚠️ ${missingCount} student(s) have no assessment for ${AL[selectedType]} (Term ${selectedTerm}). Scores will be saved only for existing assessments.`);
+      console.warn(`⚠️ Missing assessments for ${missingCount} students.`);
     } else {
       setDebugInfo(`✅ All students have assessments for ${AL[selectedType]} (Term ${selectedTerm}).`);
     }
@@ -1076,17 +1057,18 @@ function ScoreManagementView({
         setSaving(prev => ({ ...prev, [studentId]: true }));
         setSaveSuccess(prev => ({ ...prev, [studentId]: false }));
         try {
-          const assessment = asmts.find((a: any) => 
-            a.student_id === studentId && 
-            a.term === selectedTerm && 
+          const assessment = asmts.find((a: any) =>
+            a.student_id === studentId &&
+            a.term === selectedTerm &&
             a.type === selectedType &&
             a.year === klass.academic_year
           );
           if (assessment) {
             await onUpdateScore(assessment.id, Math.round(score));
             setSaveSuccess(prev => ({ ...prev, [studentId]: true }));
+            if (onRefresh) onRefresh(); // Trigger reload if available
           } else {
-            alert(`No assessment record found for this student (${studentId}) – please add a student via the Students view.`);
+            alert(`No assessment record found for this student. Please add the student via the Students view.`);
           }
         } catch (error) {
           console.error('Error saving score:', error);
@@ -1107,9 +1089,9 @@ function ScoreManagementView({
       if (value && value !== "") {
         const score = parseFloat(value);
         if (!isNaN(score) && score >= 0 && score <= maxScore) {
-          const assessment = asmts.find((a: any) => 
-            a.student_id === student.id && 
-            a.term === selectedTerm && 
+          const assessment = asmts.find((a: any) =>
+            a.student_id === student.id &&
+            a.term === selectedTerm &&
             a.type === selectedType &&
             a.year === klass.academic_year
           );
@@ -1121,12 +1103,13 @@ function ScoreManagementView({
       return Promise.resolve();
     });
     await Promise.all(savePromises);
+    if (onRefresh) onRefresh();
   };
 
   const getStudentScore = (studentId: string) => {
-    return asmts.find((a: any) => 
-      a.student_id === studentId && 
-      a.term === selectedTerm && 
+    return asmts.find((a: any) =>
+      a.student_id === studentId &&
+      a.term === selectedTerm &&
       a.type === selectedType &&
       a.year === klass.academic_year
     );
@@ -1157,21 +1140,34 @@ function ScoreManagementView({
           <h1 className="text-2xl font-bold tracking-tight">Score Management</h1>
           <p className="text-sm text-muted-foreground">{klass.name} · {klass.subject} · {klass.academic_year}</p>
           <p className="text-xs text-muted-foreground mt-1">{debugInfo}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            📊 {asmts.length} assessments in database · {students.length} students in class
+          </p>
         </div>
-        <button 
-          onClick={handleSaveAll}
-          className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity shadow-sm"
-        >
-          <SaveIcon size={18} /> Save All Scores
-        </button>
+        <div className="flex gap-2">
+          {onRefresh && (
+            <button
+              onClick={onRefresh}
+              className="flex items-center gap-2 bg-muted hover:bg-muted/70 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+            >
+              <RefreshCw size={16} /> Reload
+            </button>
+          )}
+          <button
+            onClick={handleSaveAll}
+            className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity shadow-sm"
+          >
+            <SaveIcon size={18} /> Save All Scores
+          </button>
+        </div>
       </div>
 
       <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 mb-6 shadow-sm">
         <div className="flex flex-wrap gap-4">
           <div>
             <label className={labelCls}>Term</label>
-            <select 
-              value={selectedTerm} 
+            <select
+              value={selectedTerm}
               onChange={(e) => setSelectedTerm(Number(e.target.value) as Term)}
               className={inputCls + " w-40"}
             >
@@ -1182,8 +1178,8 @@ function ScoreManagementView({
           </div>
           <div>
             <label className={labelCls}>Assessment Type</label>
-            <select 
-              value={selectedType} 
+            <select
+              value={selectedType}
               onChange={(e) => setSelectedType(e.target.value as AType)}
               className={inputCls + " w-48"}
             >
@@ -1264,8 +1260,8 @@ function ScoreManagementView({
                         onClick={() => handleSaveScore(student.id)}
                         disabled={!currentScore || currentScore === "" || isSaving || !assessment}
                         className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1 ${
-                          isSuccess 
-                            ? 'bg-emerald-50 text-emerald-700' 
+                          isSuccess
+                            ? 'bg-emerald-50 text-emerald-700'
                             : 'bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground'
                         } disabled:opacity-50 disabled:cursor-not-allowed`}
                       >
@@ -1449,7 +1445,7 @@ export default function App() {
   const [showAddStudent, setShowAddStudent] = useState(false);
   const [showAddDoc, setShowAddDoc] = useState(false);
   const [showScoreModal, setShowScoreModal] = useState(false);
-  
+
   const [editingSchool, setEditingSchool] = useState<any | null>(null);
   const [editingClass, setEditingClass] = useState<any | null>(null);
   const [editingStudent, setEditingStudent] = useState<any | null>(null);
@@ -1459,12 +1455,12 @@ export default function App() {
   // ── Load Data from Supabase ──────────────────────────────────────────────
   const loadData = useCallback(async (showLoading = true) => {
     if (isRefreshing.current) return;
-    
+
     if (showLoading) {
       setLoading(true);
     }
     setError(null);
-    
+
     if (!isSupabaseAvailable()) {
       setError('Cannot connect to database. Please check your connection.');
       if (showLoading) setLoading(false);
@@ -1476,7 +1472,7 @@ export default function App() {
       isRefreshing.current = true;
       setRefreshing(true);
       setIsOnline(true);
-      
+
       const [schoolsRes, classesRes, studentsRes, assessmentsRes, docsRes] = await Promise.all([
         supabase.from('schools').select('*').order('name'),
         supabase.from('classes').select('*').order('name'),
@@ -1496,7 +1492,7 @@ export default function App() {
       setStudents(studentsRes.data || []);
       setAsmts(assessmentsRes.data || []);
       setDocs(docsRes.data || []);
-      
+
       console.log('✅ Data loaded successfully from Supabase!');
       console.log(`📊 Loaded ${assessmentsRes.data?.length || 0} assessments.`);
     } catch (err: any) {
@@ -1666,7 +1662,7 @@ export default function App() {
       for (const term of [1, 2, 3] as Term[])
         for (const type of ATYPES)
           newAsmts.push({ id: uid(), student_id: newStudent.id, term, type, score: 0, max_score: AMAX[type], year });
-      
+
       const { error: asmtError } = await supabase.from('assessments').insert(newAsmts);
       if (asmtError) throw asmtError;
       await loadData(false);
@@ -1717,26 +1713,26 @@ export default function App() {
         .from('assessments')
         .update({ score })
         .eq('id', id)
-        .select(); // returns the updated row
+        .select();
 
       if (error) {
         console.error('❌ Supabase update error:', error);
         throw error;
       }
-      
+
       console.log('✅ Score updated successfully:', data);
-      
+
       // Update local state optimistically
-      setAsmts(prev => prev.map((a: any) => 
+      setAsmts(prev => prev.map((a: any) =>
         a.id === id ? { ...a, score } : a
       ));
-      
-      // Optionally reload to ensure consistency
-      // await loadData(false);
+
+      // 🔄 Reload data to ensure UI is fully in sync
+      await loadData(false);
     } catch (err: any) {
       console.error('❌ Error updating score:', err);
       setError(`Failed to update score: ${err.message}`);
-      throw err; // re-throw so caller can handle
+      throw err;
     }
   };
 
@@ -1882,8 +1878,8 @@ export default function App() {
           )}
           {refreshing ? 'Syncing...' : 'Ready'}
         </span>
-        <button 
-          onClick={handleManualRefresh} 
+        <button
+          onClick={handleManualRefresh}
           className="text-xs font-semibold hover:underline flex items-center gap-1"
           disabled={refreshing}
         >
@@ -1990,6 +1986,7 @@ export default function App() {
             onUpdateScore={updateScore}
             onBack={() => goClasses(school!)}
             onBackSchool={goSchools}
+            onRefresh={handleManualRefresh}
           />
         ) : (
           <>
