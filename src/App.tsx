@@ -47,7 +47,7 @@ const AL: Record<AType, string> = {
   project: "Project", exam: "Final Exam" 
 };
 const AMAX: Record<AType, number> = { test1: 20, test2: 20, assignment : 10, project: 10, exam: 60 };
-const ATYPES: AType[] = ["test1", "test2", "assignment ", "project", "exam"];
+const ATYPES: AType[] = ["test1", "test2", "assignment", "project", "exam"];
 
 const GRADE_COLORS: Record<Grade, string> = {
   "A+": "text-emerald-600 bg-emerald-10",
